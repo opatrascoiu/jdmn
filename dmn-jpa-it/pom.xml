@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright 2016 Goldman Sachs.
@@ -19,7 +18,7 @@
     <parent>
         <groupId>com.goldmansachs.jdmn</groupId>
         <artifactId>jdmn-parent</artifactId>
-        <version>4.2.1-SNAPSHOT</version>
+        <version>3.8.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>jdmn-jpa-integration-tests</artifactId>
@@ -33,9 +32,9 @@
         <dmn.diagram.folder>${project.basedir}/src/main/resources/dmn</dmn.diagram.folder>
 
         <generated.dmn.diagram.folder>${project.build.directory}/generated-resources/dmn</generated.dmn.diagram.folder>
-        <generated.source.code.folder>${project.build.directory}/generated-sources/dmn</generated.source.code.folder>
+        <generated.java.folder>${project.build.directory}/generated-sources/dmn</generated.java.folder>
         <generated.root.package>com.gs.dmn.generated</generated.root.package>
-        <generated.test.code.folder>${project.build.directory}/generated-test-sources/tck</generated.test.code.folder>
+        <tck.java.folder>${project.build.directory}/generated-test-sources/tck</tck.java.folder>
 
         <line.coverage.minimum>0.00</line.coverage.minimum>
 
@@ -72,13 +71,13 @@
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>javax.persistence</artifactId>
-            <version>2.2.1</version>
+            <version>2.2.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.jpa</artifactId>
-            <version>2.7.7</version>
+            <version>2.7.1</version>
         </dependency>
     </dependencies>
 
@@ -107,7 +106,7 @@
                         </goals>
                         <configuration>
                             <inputFileDirectory>${dmn.diagram.folder}/example-credit-decision.dmn</inputFileDirectory>
-                            <outputFileDirectory>${generated.source.code.folder}</outputFileDirectory>
+                            <outputFileDirectory>${generated.java.folder}</outputFileDirectory>
                             <inputParameters>
                                 <javaRootPackage>${generated.root.package}.example_credit_decision</javaRootPackage>
                             </inputParameters>
@@ -122,7 +121,7 @@
                         <configuration>
                             <inputTestFileDirectory>${dmn.diagram.folder}/example-credit-decision-test-01.xml</inputTestFileDirectory>
                             <inputModelFileDirectory>${dmn.diagram.folder}/example-credit-decision.dmn</inputModelFileDirectory>
-                            <outputFileDirectory>${generated.test.code.folder}</outputFileDirectory>
+                            <outputFileDirectory>${tck.java.folder}</outputFileDirectory>
                             <inputParameters>
                                 <javaRootPackage>${generated.root.package}.example_credit_decision</javaRootPackage>
                             </inputParameters>
@@ -143,7 +142,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${generated.source.code.folder}</source>
+                                <source>${generated.java.folder}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -156,7 +155,7 @@
                         <configuration>
                             <resources>
                                 <resource>
-                                    <directory>${generated.source.code.folder}</directory>
+                                    <directory>${generated.java.folder}</directory>
                                     <excludes>
                                         <exclude>**/*.java</exclude>
                                     </excludes>
@@ -172,7 +171,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${generated.test.code.folder}</source>
+                                <source>${tck.java.folder}</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -185,7 +184,7 @@
                         <configuration>
                             <resources>
                                 <resource>
-                                    <directory>${generated.test.code.folder}</directory>
+                                    <directory>${tck.java.folder}</directory>
                                     <excludes>
                                         <exclude>**/*.java</exclude>
                                     </excludes>
