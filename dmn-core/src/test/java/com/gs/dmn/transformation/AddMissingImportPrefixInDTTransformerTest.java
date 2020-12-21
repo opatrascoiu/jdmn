@@ -14,15 +14,17 @@ package com.gs.dmn.transformation;
 
 import com.gs.dmn.runtime.Pair;
 import org.junit.Test;
-import org.omg.spec.dmn._20180521.model.TLiteralExpression;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class AddMissingImportPrefixInDTTransformerTest {
-    private AddMissingImportPrefixInDTTransformer transformer = new AddMissingImportPrefixInDTTransformer();
-    private Set<String> names = new LinkedHashSet<>(Arrays.asList("ident1", "ident2"));
+    private final AddMissingImportPrefixInDTTransformer transformer = new AddMissingImportPrefixInDTTransformer();
+    private final Set<String> names = new LinkedHashSet<>(Arrays.asList("ident1", "ident2"));
 
     @Test
     public void testAddMissingPrefix() {

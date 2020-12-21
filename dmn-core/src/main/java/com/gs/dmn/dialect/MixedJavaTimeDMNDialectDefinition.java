@@ -12,23 +12,56 @@
  */
 package com.gs.dmn.dialect;
 
+import com.gs.dmn.DMNModelRepository;
+import com.gs.dmn.feel.analysis.semantics.environment.EnvironmentFactory;
 import com.gs.dmn.feel.lib.FEELLib;
 import com.gs.dmn.feel.lib.MixedJavaTimeFEELLib;
-import com.gs.dmn.feel.synthesis.type.NativeTypeFactory;
 import com.gs.dmn.feel.synthesis.type.MixedJavaTimeNativeTypeFactory;
+import com.gs.dmn.feel.synthesis.type.NativeTypeFactory;
+import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.runtime.MixedJavaTimeDMNBaseDecision;
+import com.gs.dmn.serialization.TypeDeserializationConfigurer;
+import com.gs.dmn.transformation.DMNToJavaTransformer;
+import com.gs.dmn.transformation.DMNToNativeTransformer;
+import com.gs.dmn.transformation.DMNTransformer;
+import com.gs.dmn.transformation.InputParameters;
+import com.gs.dmn.transformation.basic.BasicDMNToJavaTransformer;
+import com.gs.dmn.transformation.lazy.LazyEvaluationDetector;
+import com.gs.dmn.transformation.template.TemplateProvider;
+import com.gs.dmn.validation.DMNValidator;
+import org.omg.dmn.tck.marshaller._20160719.TestCases;
 
-public class MixedJavaTimeDMNDialectDefinition extends StandardDMNDialectDefinition {
+import javax.xml.datatype.Duration;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.OffsetTime;
+import java.time.ZonedDateTime;
+
+public class MixedJavaTimeDMNDialectDefinition extends AbstractStandardDMNDialectDefinition<BigDecimal, LocalDate, OffsetTime, ZonedDateTime, Duration> {
+    //
+    // DMN Processors
+    //
+    @Override
+    public DMNToNativeTransformer createDMNToNativeTransformer(DMNValidator dmnValidator, DMNTransformer<TestCases> dmnTransformer, TemplateProvider templateProvider, LazyEvaluationDetector lazyEvaluationDetector, TypeDeserializationConfigurer typeDeserializationConfigurer, InputParameters inputParameters, BuildLogger logger) {
+        return new DMNToJavaTransformer<>(this, dmnValidator, dmnTransformer, templateProvider, lazyEvaluationDetector, typeDeserializationConfigurer, inputParameters, logger);
+    }
+
+    @Override
+    public BasicDMNToJavaTransformer createBasicTransformer(DMNModelRepository repository, LazyEvaluationDetector lazyEvaluationDetector, InputParameters inputParameters) {
+        EnvironmentFactory environmentFactory = createEnvironmentFactory();
+        return new BasicDMNToJavaTransformer(this, repository, environmentFactory, createNativeTypeFactory(), lazyEvaluationDetector, inputParameters);
+    }
+
     //
     // DMN execution
     //
     @Override
-    public NativeTypeFactory createTypeTranslator() {
+    public NativeTypeFactory createNativeTypeFactory() {
         return new MixedJavaTimeNativeTypeFactory();
     }
 
     @Override
-    public FEELLib createFEELLib() {
+    public FEELLib<BigDecimal, LocalDate, OffsetTime, ZonedDateTime, Duration> createFEELLib() {
         return new MixedJavaTimeFEELLib();
     }
 

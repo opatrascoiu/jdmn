@@ -15,23 +15,21 @@ package com.gs.dmn.transformation.lazy;
 import com.gs.dmn.DMNModelRepository;
 import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.log.Slf4jBuildLogger;
-import com.gs.dmn.transformation.InputParamUtil;
-import org.omg.spec.dmn._20180521.model.*;
+import com.gs.dmn.transformation.InputParameters;
+import org.omg.spec.dmn._20191111.model.*;
 
 import javax.xml.bind.JAXBElement;
-import java.util.Map;
 
 public class SparseDecisionDetector extends SimpleLazyEvaluationDetector {
     private final double sparsityThreshold;
 
     public SparseDecisionDetector() {
-        this(null, new Slf4jBuildLogger(LOGGER));
+        this(new InputParameters(), new Slf4jBuildLogger(LOGGER));
     }
 
-    public SparseDecisionDetector(Map<String, String> inputParameters, BuildLogger logger) {
+    public SparseDecisionDetector(InputParameters inputParameters, BuildLogger logger) {
         super(inputParameters, logger);
-        String sparsityThresholdParam = InputParamUtil.getOptionalParam(inputParameters, "sparsityThreshold", "0.0");
-        this.sparsityThreshold = Double.parseDouble(sparsityThresholdParam);
+        this.sparsityThreshold = inputParameters.getSparsityThreshold();
     }
 
     @Override
@@ -44,7 +42,6 @@ public class SparseDecisionDetector extends SimpleLazyEvaluationDetector {
                 JAXBElement<? extends TExpression> element = decision.getExpression();
                 TExpression expression = element == null ? null : element.getValue();
                 if (expression instanceof TDecisionTable && isSparseDecisionTable((TDecisionTable) expression, sparsityThreshold)) {
-
                     logger.info(String.format("Found sparse decision '%s'", decision.getName()));
 
                     for (TInformationRequirement ir : decision.getInformationRequirement()) {

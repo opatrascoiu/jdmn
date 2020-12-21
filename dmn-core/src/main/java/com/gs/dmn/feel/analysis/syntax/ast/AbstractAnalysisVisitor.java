@@ -19,32 +19,45 @@ import com.gs.dmn.feel.analysis.semantics.type.AnyType;
 import com.gs.dmn.feel.analysis.semantics.type.ListType;
 import com.gs.dmn.feel.analysis.semantics.type.Type;
 import com.gs.dmn.feel.analysis.syntax.ast.expression.Expression;
-import com.gs.dmn.feel.synthesis.expression.NativeExpressionFactory;
 import com.gs.dmn.feel.synthesis.type.NativeTypeFactory;
-import com.gs.dmn.transformation.basic.BasicDMN2JavaTransformer;
+import com.gs.dmn.transformation.basic.BasicDMNToNativeTransformer;
+import com.gs.dmn.transformation.basic.DMNEnvironmentFactory;
+import com.gs.dmn.transformation.basic.DMNExpressionToNativeTransformer;
+import com.gs.dmn.transformation.native_.NativeFactory;
 
 public abstract class AbstractAnalysisVisitor extends AbstractVisitor {
-    protected final DMNModelRepository dmnModelRepository;
-    protected final BasicDMN2JavaTransformer dmnTransformer;
-    protected final EnvironmentFactory environmentFactory;
-    protected final NativeTypeFactory feelTypeTranslator;
-    protected final NativeExpressionFactory expressionFactory;
+    protected final BasicDMNToNativeTransformer dmnTransformer;
 
-    protected AbstractAnalysisVisitor(BasicDMN2JavaTransformer dmnTransformer) {
-        this.dmnModelRepository = dmnTransformer.getDMNModelRepository();
+    protected final DMNModelRepository dmnModelRepository;
+    protected final EnvironmentFactory environmentFactory;
+
+    protected final NativeTypeFactory nativeTypeFactory;
+    protected final NativeFactory nativeFactory;
+
+    protected final DMNEnvironmentFactory dmnEnvironmentFactory;
+    protected final DMNExpressionToNativeTransformer expressionToNativeTransformer;
+
+    protected AbstractAnalysisVisitor(BasicDMNToNativeTransformer dmnTransformer) {
         this.dmnTransformer = dmnTransformer;
+
+        this.dmnModelRepository = dmnTransformer.getDMNModelRepository();
         this.environmentFactory = dmnTransformer.getEnvironmentFactory();
-        this.feelTypeTranslator = dmnTransformer.getFEELTypeTranslator();
-        this.expressionFactory = dmnTransformer.getExpressionFactory();
+
+        this.nativeTypeFactory = dmnTransformer.getNativeTypeFactory();
+        this.dmnEnvironmentFactory = dmnTransformer.getDMNEnvironmentFactory();
+        this.nativeFactory = dmnTransformer.getNativeFactory();
+
+        this.expressionToNativeTransformer = dmnTransformer.getExpressionToNativeTransformer();
     }
 
-    protected FEELContext makeFilterContext(FEELContext parentContext, Expression source, String filterVariableName) {
-        Environment environment = this.environmentFactory.makeEnvironment(parentContext.getEnvironment());
+    protected FEELContext makeFilterContext(FEELContext context, Expression source, String filterVariableName) {
+        Environment environment = context.getEnvironment();
+        Environment filterEnvironment = this.environmentFactory.makeEnvironment(environment);
         Type itemType = AnyType.ANY;
         if (source.getType() instanceof ListType) {
             itemType = ((ListType) source.getType()).getElementType();
         }
-        environment.addDeclaration(this.environmentFactory.makeVariableDeclaration(filterVariableName, itemType));
-        return FEELContext.makeContext(parentContext.getElement(), environment);
+        filterEnvironment.addDeclaration(this.environmentFactory.makeVariableDeclaration(filterVariableName, itemType));
+        return FEELContext.makeContext(context.getElement(), filterEnvironment);
     }
 }

@@ -29,6 +29,10 @@ public class ${testClassName} extends ${decisionBaseClass} {
         <@initializeInputs tc/>
 
         <@checkResults tc/>
+        <#if tckUtil.isGenerateProto()>
+
+        <@checkProtoResults tc/>
+        </#if>
     }
 
         </#items>
@@ -39,17 +43,15 @@ public class ${testClassName} extends ${decisionBaseClass} {
 </#macro>
 
 <#macro initializeInputs testCase>
-        ${tckUtil.annotationSetClassName()} ${tckUtil.annotationSetVariableName()} = new ${tckUtil.annotationSetClassName()}();
-        ${tckUtil.eventListenerClassName()} ${tckUtil.eventListenerVariableName()} = new ${tckUtil.defaultEventListenerClassName()}();
-        ${tckUtil.externalExecutorClassName()} ${tckUtil.externalExecutorVariableName()} = new ${tckUtil.defaultExternalExecutorClassName()}();
-        <#if tckUtil.isCaching()>
-        ${tckUtil.cacheInterfaceName()} ${tckUtil.cacheVariableName()} = new ${tckUtil.defaultCacheClassName()}();
-        </#if>
+        ${tckUtil.annotationSetClassName()} ${tckUtil.annotationSetVariableName()} = ${tckUtil.defaultConstructor(tckUtil.annotationSetClassName())};
+        ${tckUtil.eventListenerClassName()} ${tckUtil.eventListenerVariableName()} = ${tckUtil.defaultConstructor(tckUtil.defaultEventListenerClassName())};
+        ${tckUtil.externalExecutorClassName()} ${tckUtil.externalExecutorVariableName()} = ${tckUtil.defaultConstructor(tckUtil.defaultExternalExecutorClassName())};
+        ${tckUtil.cacheInterfaceName()} ${tckUtil.cacheVariableName()} = ${tckUtil.defaultConstructor(tckUtil.defaultCacheClassName())};
     <#list testCase.inputNode>
         // Initialize input data
         <#items as input>
         <#assign inputInfo = tckUtil.extractInputNodeInfo(testCases, testCase, input) >
-        ${tckUtil.toJavaType(inputInfo)} ${tckUtil.inputDataVariableName(inputInfo)} = ${tckUtil.toJavaExpression(inputInfo)};
+        ${tckUtil.toNativeType(inputInfo)} ${tckUtil.inputDataVariableName(inputInfo)} = ${tckUtil.toNativeExpression(inputInfo)};
         <#if tckUtil.isCached(inputInfo)>
         ${tckUtil.cacheVariableName()}.bind("${tckUtil.inputDataVariableName(inputInfo)}", ${tckUtil.inputDataVariableName(inputInfo)});
         </#if>
@@ -62,11 +64,30 @@ public class ${testClassName} extends ${decisionBaseClass} {
         <#items as result>
         // Check ${result.name}
         <#assign resultInfo = tckUtil.extractResultNodeInfo(testCases, testCase, result) >
-        <#if tckUtil.isCaching()>
-        checkValues(${tckUtil.toJavaExpression(resultInfo)}, new ${tckUtil.qualifiedName(resultInfo)}().apply(${tckUtil.drgElementArgumentsExtraCache(tckUtil.drgElementArgumentsExtra(tckUtil.drgElementArgumentList(resultInfo)))}));
+        checkValues(${tckUtil.toNativeExpression(resultInfo)}, ${tckUtil.defaultConstructor(tckUtil.qualifiedName(resultInfo))}.apply(${tckUtil.drgElementArgumentListExtraCache(tckUtil.drgElementArgumentListExtra(tckUtil.drgElementArgumentList(resultInfo)))}));
+        </#items>
+    </#list>
+</#macro>
+
+<#macro checkProtoResults testCase>
+    <#list testCase.resultNode>
+        <#items as result>
+        // Check ${result.name} with proto request
+        <#assign resultInfo = tckUtil.extractResultNodeInfo(testCases, testCase, result) >
+        ${tckUtil.qualifiedRequestMessageName(resultInfo)}.Builder ${tckUtil.builderVariableName(resultInfo)} = ${tckUtil.qualifiedRequestMessageName(resultInfo)}.newBuilder();
+        <#list tckUtil.drgElementTypeSignature(resultInfo) as parameter>
+        <#assign variableNameProto>${parameter.left}Proto${result?index}</#assign>
+        ${tckUtil.toNativeTypeProto(parameter.right)} ${variableNameProto} = ${tckUtil.toNativeExpressionProto(parameter)};
+        <#if tckUtil.isProtoReference(parameter.right)>
+        if (${variableNameProto} != null) {
+            ${tckUtil.builderVariableName(resultInfo)}.${tckUtil.protoSetter(parameter)}(${variableNameProto});
+        }
         <#else>
-        checkValues(${tckUtil.toJavaExpression(resultInfo)}, new ${tckUtil.qualifiedName(resultInfo)}().apply(${tckUtil.drgElementArgumentsExtra(tckUtil.drgElementArgumentList(resultInfo))}));
+        ${tckUtil.builderVariableName(resultInfo)}.${tckUtil.protoSetter(parameter)}(${variableNameProto});
         </#if>
+        </#list>
+        ${tckUtil.qualifiedRequestMessageName(resultInfo)} ${tckUtil.requestVariableName(resultInfo)} = ${tckUtil.builderVariableName(resultInfo)}.build();
+        checkValues(${tckUtil.toNativeExpressionProto(resultInfo)}, ${tckUtil.defaultConstructor(tckUtil.qualifiedName(resultInfo))}.apply(${tckUtil.drgElementArgumentListExtraCacheProto(resultInfo)}).${tckUtil.protoGetter(resultInfo)});
         </#items>
     </#list>
 </#macro>

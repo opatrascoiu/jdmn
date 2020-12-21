@@ -12,7 +12,7 @@
  */
 package com.gs.dmn.fitnesse.fixture.feel;
 
-import com.gs.dmn.runtime.interpreter.Result;
+import com.gs.dmn.feel.analysis.syntax.ast.expression.Expression;
 
 public class FEELExpressionFixture extends FEELFixture {
     private String expression;
@@ -26,7 +26,7 @@ public class FEELExpressionFixture extends FEELFixture {
     }
 
     public Object output() {
-        Result result = this.feelInterpreter.evaluateExpression(this.expression, makeContext(null));
-        return Result.value(result);
+        Expression result = this.feelInterpreter.parseExpression(this.expression);
+        return result.toString();
     }
 }

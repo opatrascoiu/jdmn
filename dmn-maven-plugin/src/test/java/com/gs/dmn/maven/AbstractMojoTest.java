@@ -12,10 +12,14 @@
  */
 package com.gs.dmn.maven;
 
+import org.apache.maven.project.MavenProject;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class AbstractMojoTest {
+public abstract class AbstractMojoTest {
+    protected final MavenProject project = new MavenProject();
+
     protected Map<String, String> makeParams() {
         Map<String, String> map = new LinkedHashMap<>();
 

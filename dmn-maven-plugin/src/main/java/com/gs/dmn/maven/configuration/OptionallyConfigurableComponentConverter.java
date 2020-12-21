@@ -19,10 +19,12 @@ import org.codehaus.plexus.component.configurator.converters.lookup.ConverterLoo
 import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OptionallyConfigurableComponentConverter extends AbstractConfigurationConverter {
-
     public OptionallyConfigurableComponentConverter() {
     }
 
@@ -35,7 +37,6 @@ public class OptionallyConfigurableComponentConverter extends AbstractConfigurat
     public Object fromConfiguration(ConverterLookup lookup, PlexusConfiguration configuration, Class<?> type,
                                     Class<?> enclosingType, ClassLoader loader, ExpressionEvaluator evaluator,
                                     ConfigurationListener listener) throws ComponentConfigurationException {
-
         OptionallyConfigurableMojoComponent component;
 
         if (configuration == null) {
@@ -44,9 +45,8 @@ public class OptionallyConfigurableComponentConverter extends AbstractConfigurat
 
         // Instantiate the type as defined in Mojo configuration
         try {
-            component = (OptionallyConfigurableMojoComponent)type.newInstance();
-        }
-        catch (InstantiationException | IllegalAccessException ex) {
+            component = (OptionallyConfigurableMojoComponent) type.getDeclaredConstructor().newInstance();
+        } catch (Exception ex) {
             throw new ComponentConfigurationException(String.format(
                     "Cannot instantiate configurable component type \"%s\" (%s)", type.getName(), ex.getMessage()), ex);
         }
@@ -73,14 +73,12 @@ public class OptionallyConfigurableComponentConverter extends AbstractConfigurat
 
     private OptionallyConfigurableMojoComponent configureSimpleComponent(OptionallyConfigurableMojoComponent component,
                                                                          PlexusConfiguration configuration) {
-
         component.setName(configuration.getValue());
         return component;
     }
 
     private OptionallyConfigurableMojoComponent configureCompoundComponent(OptionallyConfigurableMojoComponent component,
                                                                            PlexusConfiguration configuration) throws ComponentConfigurationException {
-
         PlexusConfiguration name = configuration.getChild(OptionallyConfigurableMojoComponent.ELEMENT_NAME, false);
         if (name == null || name.getValue() == null) {
             throw new ComponentConfigurationException(String.format(
@@ -102,7 +100,6 @@ public class OptionallyConfigurableComponentConverter extends AbstractConfigurat
         Map<String, Object> node = new HashMap<>();
 
         for (PlexusConfiguration child : configuration.getChildren()) {
-
             // Expand node to a list where duplicate keys exist
             Object existingNode = node.get(child.getName());
             if (existingNode != null) {

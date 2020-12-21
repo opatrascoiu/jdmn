@@ -13,8 +13,8 @@
 package com.gs.dmn.transformation.basic;
 
 import com.gs.dmn.feel.analysis.semantics.type.Type;
-import org.omg.spec.dmn._20180521.model.TDefinitions;
-import org.omg.spec.dmn._20180521.model.TItemDefinition;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
+import org.omg.spec.dmn._20191111.model.TItemDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,26 +36,12 @@ public class FEELTypeMemoizer {
         this.typeOfQName.put(key, type);
     }
 
-    public Type get(TDefinitions model, String typeName) {
-        String key = makeKey(model, typeName);
-        return this.typeOfQName.get(key);
-    }
-
-    public void put(TDefinitions model, String typeName, Type type) {
-        String key = makeKey(model, typeName);
-        this.typeOfQName.put(key, type);
-    }
-
     public Type get(TItemDefinition itemDefinition) {
         return this.typeOfItemDefinition.get(itemDefinition);
     }
 
     public void put(TItemDefinition itemDefinition, Type type) {
         this.typeOfItemDefinition.put(itemDefinition, type);
-    }
-
-    private String makeKey(TDefinitions model, String typeName) {
-        return String.format("%s:%s", getModelNamespace(model), typeName);
     }
 
     private String makeKey(TDefinitions model, QualifiedName qName) {

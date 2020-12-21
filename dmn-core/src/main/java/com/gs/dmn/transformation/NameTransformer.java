@@ -16,19 +16,16 @@ import com.gs.dmn.DMNModelRepository;
 import com.gs.dmn.feel.analysis.scanner.LexicalContext;
 import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.log.Slf4jBuildLogger;
-import com.gs.dmn.runtime.DMNRuntimeException;
 import com.gs.dmn.runtime.Pair;
 import com.gs.dmn.serialization.PrefixNamespaceMappings;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.omg.dmn.tck.marshaller._20160719.TestCases;
 import org.omg.dmn.tck.marshaller._20160719.ValueType;
-import org.omg.spec.dmn._20180521.model.*;
+import org.omg.spec.dmn._20191111.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,16 +61,21 @@ public abstract class NameTransformer extends SimpleDMNTransformer<TestCases> {
     private boolean transformDefinition = true;
     private final Set<TDMNElement> renamedElements = new LinkedHashSet<>();
 
-    public NameTransformer() {
+    protected NameTransformer() {
         this(new Slf4jBuildLogger(LOGGER));
     }
 
-    public NameTransformer(BuildLogger logger) {
+    protected NameTransformer(BuildLogger logger) {
         this.logger = logger;
     }
 
     @Override
     public DMNModelRepository transform(DMNModelRepository repository) {
+        if (isEmpty(repository)) {
+            logger.warn("DMN repository is empty; transformer will not run");
+            return repository;
+        }
+
         this.repository = repository;
         transformDefinitions(repository);
         this.transformDefinition = false;
@@ -82,11 +84,17 @@ public abstract class NameTransformer extends SimpleDMNTransformer<TestCases> {
 
     @Override
     public Pair<DMNModelRepository, List<TestCases>> transform(DMNModelRepository repository, List<TestCases> testCasesList) {
+        if (isEmpty(repository, testCasesList)) {
+            logger.warn("DMN repository or test cases list is empty; transformer will not run");
+            return new Pair<>(repository, testCasesList);
+        }
+
+        // Transform model
         if (transformDefinition) {
             transform(repository);
         }
 
-        // Clean each TestCase
+        // Transform test cases
         for (TestCases testCases: testCasesList) {
             if (testCases != null) {
                 for (TestCases.TestCase testCase : testCases.getTestCase()) {
@@ -237,11 +245,10 @@ public abstract class NameTransformer extends SimpleDMNTransformer<TestCases> {
         for (TDefinitions definitions: repository.getAllDefinitions()) {
             for (TImport imp: definitions.getImport()) {
                 if (imp != null && imp.getName() != null) {
-                    String fieldName = "name";
                     String oldName = imp.getName();
                     String newName = transformName(oldName);
                     if (!oldName.equals(newName)) {
-                        setField(imp, fieldName, newName);
+                        imp.setName(newName);
                         PrefixNamespaceMappings prefixNamespaceMappings = repository.getPrefixNamespaceMappings();
                         prefixNamespaceMappings.renameKey(oldName, newName);
                     }
@@ -385,7 +392,7 @@ public abstract class NameTransformer extends SimpleDMNTransformer<TestCases> {
 
         String text = literalExpression.getText();
         String newText = replaceNamesInText(text, lexicalContext);
-        setField(literalExpression, "text", newText);
+        setText(literalExpression, newText);
     }
 
     protected void replaceNamesInText(TUnaryTests unaryTests, LexicalContext lexicalContext) {
@@ -395,7 +402,7 @@ public abstract class NameTransformer extends SimpleDMNTransformer<TestCases> {
 
         String text = unaryTests.getText();
         String newText = replaceNamesInText(text, lexicalContext);
-        setField(unaryTests, "text", newText);
+        setText(unaryTests, newText);
     }
 
     protected String replaceNamesInText(String text, LexicalContext lexicalContext) {
@@ -586,9 +593,8 @@ public abstract class NameTransformer extends SimpleDMNTransformer<TestCases> {
         }
         renamedElements.add(element);
         if (element.getName() != null) {
-            String fieldName = "name";
             String newValue = transformName(element.getName());
-            setField(element, fieldName, newValue);
+            setName(element, newValue);
         }
     }
 
@@ -601,19 +607,25 @@ public abstract class NameTransformer extends SimpleDMNTransformer<TestCases> {
         }
         renamedElements.add(element);
         if (element.getName() != null) {
-            String fieldName = "name";
             String newValue = transformName(element.getName());
-            setField(element, fieldName, newValue);
+            setName(element, newValue);
         }
     }
 
-    protected void setField(TDMNElement element, String fieldName, String newName) {
-        try {
-            Field nameField = FieldUtils.getField(element.getClass(), fieldName, true);
-            nameField.set(element, newName);
-        } catch (Exception e) {
-            throw new DMNRuntimeException(String.format("Cannot set field 'name' of element '%s'", element.getClass().getSimpleName()), e);
-        }
+    protected void setName(TNamedElement element, String newName) {
+        element.setName(newName);
+    }
+
+    protected void setName(TOutputClause element, String newName) {
+        element.setName(newName);
+    }
+
+    protected void setText(TLiteralExpression element, String text) {
+        element.setText(text);
+    }
+
+    protected void setText(TUnaryTests element, String text) {
+        element.setText(text);
     }
 
     public abstract String transformName(String name);

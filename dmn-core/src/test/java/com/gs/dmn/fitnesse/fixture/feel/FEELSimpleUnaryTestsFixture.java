@@ -12,54 +12,21 @@
  */
 package com.gs.dmn.fitnesse.fixture.feel;
 
-import com.gs.dmn.feel.analysis.semantics.environment.Environment;
-import com.gs.dmn.feel.analysis.syntax.ast.FEELContext;
-import com.gs.dmn.feel.analysis.syntax.ast.expression.Expression;
 import com.gs.dmn.feel.analysis.syntax.ast.test.UnaryTests;
-import com.gs.dmn.runtime.interpreter.Result;
-import com.gs.dmn.runtime.interpreter.environment.RuntimeEnvironment;
-import com.gs.dmn.transformation.DMNToJavaTransformer;
-import org.omg.spec.dmn._20180521.model.TNamedElement;
 
 public class FEELSimpleUnaryTestsFixture extends FEELFixture {
-    private String inputExpression;
     private String inputEntry;
 
     public FEELSimpleUnaryTestsFixture() {
         super();
     }
 
-    public void setInputExpression(String inputExpression) {
-        this.inputExpression = inputExpression;
-    }
-
-    public void setInputEntry(String inputEntry) {
-        this.inputEntry = inputEntry;
+    public void setInputEntry(String expression) {
+        this.inputEntry = expression;
     }
 
     public Object output() {
-        // Analyze input expression
-        Environment inputExpressionEnvironment = makeEnvironment(this.scope);
-        RuntimeEnvironment runtimeEnvironment = makeRuntimeEnvironment(this.scope);
-        FEELContext inputExpressionContext = FEELContext.makeContext(getElement(), inputExpressionEnvironment, runtimeEnvironment);
-        Expression inputExpression = this.feelInterpreter.analyzeSimpleExpressions(this.inputExpression, inputExpressionContext);
-
-        // Analyze input entry
-        Environment inputEntryEnvironment = makeInputEntryEnvironment(inputExpressionEnvironment, inputExpression);
-        FEELContext inputEntryContext = FEELContext.makeContext(getElement(), inputEntryEnvironment, runtimeEnvironment);
-        UnaryTests inputEntryTest = this.feelInterpreter.analyzeSimpleUnaryTests(this.inputEntry, inputEntryContext);
-
-        // Evaluate input expression
-        Result inputExpressionResult = this.feelInterpreter.evaluateExpression(inputExpression, inputExpressionContext);
-        Object inputExpressionValue = Result.value(inputExpressionResult);
-
-        // Evaluate input entry
-        inputEntryContext.runtimeBind(DMNToJavaTransformer.INPUT_ENTRY_PLACE_HOLDER, inputExpressionValue);
-        Result result = this.feelInterpreter.evaluateUnaryTests(inputEntryTest, inputEntryContext);
-        return Result.value(result);
-    }
-
-    private TNamedElement getElement() {
-        return null;
+        UnaryTests unaryTests = this.feelInterpreter.parseSimpleUnaryTests(this.inputEntry);
+        return unaryTests.toString();
     }
 }

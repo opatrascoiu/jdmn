@@ -14,8 +14,8 @@ package com.gs.dmn.signavio.validation;
 
 import com.gs.dmn.validation.SimpleDMNValidator;
 import org.apache.commons.lang3.StringUtils;
-import org.omg.spec.dmn._20180521.model.TDMNElement;
-import org.omg.spec.dmn._20180521.model.TDRGElement;
+import org.omg.spec.dmn._20191111.model.TDMNElement;
+import org.omg.spec.dmn._20191111.model.TDRGElement;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,11 +30,7 @@ public abstract class LabelDuplicationValidator extends SimpleDMNValidator {
             if (label == null) {
                 throw new RuntimeException(String.format("%s has no label", decision.getId()));
             }
-            List<TDMNElement> elementList = map.get(label);
-            if (elementList == null) {
-                elementList = new ArrayList<>();
-                map.put(label, elementList);
-            }
+            List<TDMNElement> elementList = map.computeIfAbsent(label, k -> new ArrayList<>());
             elementList.add(decision);
         }
         for(Map.Entry<String, List<TDMNElement>> entry: map.entrySet()) {

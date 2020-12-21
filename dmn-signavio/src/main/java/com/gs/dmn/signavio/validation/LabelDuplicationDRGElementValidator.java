@@ -13,7 +13,7 @@
 package com.gs.dmn.signavio.validation;
 
 import com.gs.dmn.DMNModelRepository;
-import org.omg.spec.dmn._20180521.model.TDefinitions;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,8 @@ public class LabelDuplicationDRGElementValidator extends LabelDuplicationValidat
     @Override
     public List<String> validate(DMNModelRepository dmnModelRepository) {
         List<String> errors = new ArrayList<>();
-        if (dmnModelRepository == null) {
+        if (isEmpty(dmnModelRepository)) {
+            logger.warn("DMN repository is empty; validator will not run");
             return errors;
         }
 

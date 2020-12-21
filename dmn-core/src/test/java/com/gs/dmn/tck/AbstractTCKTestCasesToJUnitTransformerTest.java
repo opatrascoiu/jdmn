@@ -12,32 +12,36 @@
  */
 package com.gs.dmn.tck;
 
-import com.gs.dmn.feel.analysis.semantics.environment.DefaultDMNEnvironmentFactory;
+import com.gs.dmn.feel.analysis.semantics.environment.StandardEnvironmentFactory;
 import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.runtime.DefaultDMNBaseDecision;
 import com.gs.dmn.runtime.Pair;
 import com.gs.dmn.serialization.DMNConstants;
 import com.gs.dmn.serialization.DefaultTypeDeserializationConfigurer;
 import com.gs.dmn.serialization.TypeDeserializationConfigurer;
-import com.gs.dmn.transformation.AbstractTestCasesTransformerTest;
-import com.gs.dmn.transformation.DMNTransformer;
-import com.gs.dmn.transformation.FileTransformer;
-import com.gs.dmn.transformation.ToSimpleNameTransformer;
+import com.gs.dmn.transformation.*;
 import com.gs.dmn.transformation.lazy.LazyEvaluationDetector;
 import com.gs.dmn.transformation.lazy.NopLazyEvaluationDetector;
 import com.gs.dmn.validation.DMNValidator;
-import com.gs.dmn.validation.DefaultDMNValidator;
+import com.gs.dmn.validation.NopDMNValidator;
+import org.omg.dmn.tck.marshaller._20160719.TestCases;
 
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
-public abstract class AbstractTCKTestCasesToJUnitTransformerTest extends AbstractTestCasesTransformerTest {
-    public void doSingleModelTest(String dmnFileName, String testFileName, Pair<String, String>... extraInputParameters) throws Exception {
-        String dmnPath = getDMNInputPath() + "/";
-        String testCasesPath = getTestCasesInputPath() + "/";
-        String expectedPath = getExpectedPath() + "/" + friendlyFolderName(dmnFileName);
+public abstract class AbstractTCKTestCasesToJUnitTransformerTest<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends AbstractTestCasesTransformerTest<NUMBER, DATE, TIME, DATE_TIME, DURATION, TestCases> {
+    @Override
+    protected URI resource(String path) {
+        return tckResource(path);
+    }
+
+    @SafeVarargs
+    public final void doSingleModelTest(String dmnVersion, String dmnFileName, String testFileName, Pair<String, String>... extraInputParameters) throws Exception {
+        String dmnPath = completePath(getDMNInputPath(), dmnVersion, dmnFileName) + "/";
+        String testCasesPath = completePath(getTestCasesInputPath(), dmnVersion, dmnFileName) + "/";
+        String expectedPath = completePath(getExpectedPath(), dmnVersion, dmnFileName);
         String inputTestFilePath = testCasesPath + testFileName + TestCasesReader.DEFAULT_TEST_CASE_FILE_EXTENSION;
         String inputModelFilePath = dmnPath + dmnFileName + DMNConstants.DMN_FILE_EXTENSION;
         String decodedInputTestFilePath = URLDecoder.decode(resource(inputTestFilePath).getPath(), "UTF-8");
@@ -45,12 +49,11 @@ public abstract class AbstractTCKTestCasesToJUnitTransformerTest extends Abstrac
         super.doTest(decodedInputTestFilePath, decodedInputModelFilePath, expectedPath, extraInputParameters);
     }
 
-    public void doMultipleModelsTest(String dmnFolderName, String testFolderName, Pair<String, String>... extraInputParameters) throws Exception {
-        String dmnPath = getDMNInputPath() + "/";
-        String testCasesPath = getTestCasesInputPath() + "/";
-        String expectedPath = getExpectedPath() + "/" + friendlyFolderName(dmnFolderName);
-        String inputTestFilePath = testCasesPath + testFolderName;
-        String inputModelFilePath = dmnPath + dmnFolderName;
+    @SafeVarargs
+    public final void doMultipleModelsTest(String dmnVersion, String dmnFolderName, String testFolderName, Pair<String, String>... extraInputParameters) throws Exception {
+        String inputTestFilePath = completePath(getTestCasesInputPath(), dmnVersion, testFolderName) + "/";
+        String inputModelFilePath = completePath(getDMNInputPath(), dmnVersion, dmnFolderName) + "/";
+        String expectedPath = completePath(getExpectedPath(), dmnVersion, dmnFolderName);
         String decodedInputTestFilePath = URLDecoder.decode(resource(inputTestFilePath).getPath(), "UTF-8");
         String decodedInputModelFilePath = URLDecoder.decode(resource(inputModelFilePath).getPath(), "UTF-8");
         super.doTest(decodedInputTestFilePath, decodedInputModelFilePath, expectedPath, extraInputParameters);
@@ -58,16 +61,16 @@ public abstract class AbstractTCKTestCasesToJUnitTransformerTest extends Abstrac
 
     @Override
     protected DMNValidator makeDMNValidator(BuildLogger logger) {
-        return new DefaultDMNValidator(logger);
+        return new NopDMNValidator();
     }
 
     @Override
-    protected DMNTransformer makeDMNTransformer(BuildLogger logger) {
+    protected DMNTransformer<TestCases> makeDMNTransformer(BuildLogger logger) {
         return new ToSimpleNameTransformer(logger);
     }
 
     @Override
-    protected LazyEvaluationDetector makeLazyEvaluationDetector(Map<String, String> inputParameters, BuildLogger logger) {
+    protected LazyEvaluationDetector makeLazyEvaluationDetector(InputParameters inputParameters, BuildLogger logger) {
         return new NopLazyEvaluationDetector();
     }
 
@@ -77,15 +80,15 @@ public abstract class AbstractTCKTestCasesToJUnitTransformerTest extends Abstrac
     }
 
     @Override
-    protected Map<String, String> makeInputParameters() {
-        LinkedHashMap<String, String> inputParams = new LinkedHashMap<String, String>();
-        inputParams.put("environmentFactoryClass", DefaultDMNEnvironmentFactory.class.getName());
+    protected Map<String, String> makeInputParametersMap() {
+        Map<String, String> inputParams = super.makeInputParametersMap();
+        inputParams.put("environmentFactoryClass", StandardEnvironmentFactory.class.getName());
         inputParams.put("decisionBaseClass", DefaultDMNBaseDecision.class.getName());
         return inputParams;
     }
 
     @Override
-    protected abstract FileTransformer makeTransformer(Path inputModelPath, Map<String, String> inputParameters, BuildLogger logger);
+    protected abstract FileTransformer makeTransformer(Path inputModelPath, InputParameters inputParameters, BuildLogger logger);
 
     protected abstract String getDMNInputPath();
 

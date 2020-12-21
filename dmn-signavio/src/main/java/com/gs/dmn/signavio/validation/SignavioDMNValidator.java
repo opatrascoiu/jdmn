@@ -14,10 +14,7 @@ package com.gs.dmn.signavio.validation;
 
 import com.gs.dmn.DMNModelRepository;
 import com.gs.dmn.validation.DefaultDMNValidator;
-import org.omg.spec.dmn._20180521.model.TBusinessKnowledgeModel;
-import org.omg.spec.dmn._20180521.model.TDMNElement;
-import org.omg.spec.dmn._20180521.model.TDecision;
-import org.omg.spec.dmn._20180521.model.TFunctionDefinition;
+import org.omg.spec.dmn._20191111.model.*;
 import org.w3c.dom.Element;
 
 import java.util.List;
@@ -27,25 +24,26 @@ public class SignavioDMNValidator extends DefaultDMNValidator {
     }
 
     @Override
-    protected void validateBusinessKnowledgeModel(TBusinessKnowledgeModel knowledgeModel, List<String> errors) {
-        super.validateBusinessKnowledgeModel(knowledgeModel, errors);
+    protected void validateBusinessKnowledgeModel(DMNModelRepository repository, TDefinitions definitions, TBusinessKnowledgeModel knowledgeModel, List<String> errors) {
+        super.validateBusinessKnowledgeModel(repository, definitions, knowledgeModel, errors);
 
         // Validate encapsulated logic
         TFunctionDefinition encapsulatedLogic = knowledgeModel.getEncapsulatedLogic();
         TDMNElement.ExtensionElements extensionElements = knowledgeModel.getExtensionElements();
         if (encapsulatedLogic == null && extensionElements == null) {
-            errors.add(String.format("Missing encapsulatedLogic for knowledgeModel '%s'", knowledgeModel.getName()));
+            String errorMessage = "Missing encapsulatedLogic";
+            errors.add(makeError(repository, definitions, knowledgeModel, errorMessage));
         }
     }
 
     @Override
-    protected void validateDecision(TDecision decision, DMNModelRepository dmnModelRepository, List<String> errors) {
-        super.validateDecision(decision, dmnModelRepository, errors);
+    protected void validateDecision(DMNModelRepository repository, TDefinitions definitions, TDecision decision, List<String> errors) {
+        super.validateDecision(repository, definitions, decision, errors);
         // Validate extensions
-        validateExtensionElements(decision, errors);
+        validateExtensionElements(repository, definitions, decision, errors);
     }
 
-    private void validateExtensionElements(TDecision decision, List<String> errors) {
+    private void validateExtensionElements(DMNModelRepository repository, TDefinitions definitions, TDecision decision, List<String> errors) {
         TDMNElement.ExtensionElements extensionElements = decision.getExtensionElements();
         if (extensionElements != null) {
             List<Object> any = extensionElements.getAny();
@@ -54,10 +52,12 @@ public class SignavioDMNValidator extends DefaultDMNValidator {
                     if (obj instanceof Element) {
                         String localName = ((Element) obj).getLocalName();
                         if (!"MultiInstanceDecisionLogic".equals(localName)) {
-                            errors.add(String.format("Extension '%s' not supported for decision '%s'", obj, decision.getName()));
+                            String errorMessage = String.format("Extension '%s' not supported", obj);
+                            errors.add(makeError(repository, definitions, decision, errorMessage));
                         }
                     } else {
-                        errors.add(String.format("Extension '%s' not supported for decision '%s'", obj, decision.getName()));
+                        String errorMessage = String.format("Extension '%s' not supported", obj);
+                        errors.add(makeError(repository, definitions, decision, errorMessage));
                     }
                 }
             }

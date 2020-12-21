@@ -16,26 +16,33 @@ import com.gs.dmn.feel.lib.FEELLib;
 import com.gs.dmn.runtime.Context;
 import com.gs.dmn.runtime.Pair;
 import com.gs.dmn.signavio.runtime.DefaultSignavioBaseDecision;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 public class ExportedLiteralDMNInterpreterTest extends AbstractSignavioDMNInterpreterTest {
     private final DefaultSignavioBaseDecision decision = new DefaultSignavioBaseDecision();
+
+    @Override
+    protected String getInputPath() {
+        return "dmn/literal";
+    }
 
     @Test
     public void testBooleanLiteralExpression() throws Exception {
         doTest(new DecisionTestConfig(
                 "decision",
                 "simple-decision-feel-boolean-literal-expression",
-                makeRuntimeEnvironment(Arrays.asList(new Pair[]{
-                        new Pair("numberInput", decision.number("-1")),
-                        new Pair("stringInput", "123"),
-                        new Pair("booleanInput", true),
-                        new Pair("dateInput", decision.date("2017-01-01")),
-                        new Pair("enumerationInput", "e1")
-                })),
+                makeRuntimeEnvironment(Arrays.asList(
+                        new Pair<>("numberInput", decision.number("-1")),
+                        new Pair<>("stringInput", "123"),
+                        new Pair<>("booleanInput", true),
+                        new Pair<>("dateInput", decision.date("2017-01-01")),
+                        new Pair<>("enumerationInput", "e1")
+                )),
                 Boolean.TRUE)
         );
     }
@@ -45,9 +52,9 @@ public class ExportedLiteralDMNInterpreterTest extends AbstractSignavioDMNInterp
         doTest(new DecisionTestConfig(
                 "monthly",
                 "simple-decision-feel-complex-literal-expression",
-                makeRuntimeEnvironment(Arrays.asList(new Pair[]{
-                        new Pair("loan", new Context().add("principal", decision.number("1024")).add("rate", decision.number("5")).add("term", decision.number("25")))
-                })),
+                makeRuntimeEnvironment(Arrays.asList(
+                        new Pair<>("loan", new Context().add("principal", decision.number("1024")).add("rate", decision.number("5")).add("term", decision.number("25")))
+                )),
                 decision.number("1024"))
         );
     }
@@ -57,13 +64,13 @@ public class ExportedLiteralDMNInterpreterTest extends AbstractSignavioDMNInterp
         doTest(new DecisionTestConfig(
                 "decision",
                 "simple-decision-feel-date-literal-expression",
-                makeRuntimeEnvironment(Arrays.asList(new Pair[]{
-                        new Pair("numberInput", decision.number("-1")),
-                        new Pair("stringInput", "123"),
-                        new Pair("booleanInput", true),
-                        new Pair("dateInput", decision.date("2017-01-01")),
-                        new Pair("enumerationInput", "e1")
-                })),
+                makeRuntimeEnvironment(Arrays.asList(
+                        new Pair<>("numberInput", decision.number("-1")),
+                        new Pair<>("stringInput", "123"),
+                        new Pair<>("booleanInput", true),
+                        new Pair<>("dateInput", decision.date("2017-01-01")),
+                        new Pair<>("enumerationInput", "e1")
+                )),
                 decision.number("1"))
         );
     }
@@ -73,13 +80,13 @@ public class ExportedLiteralDMNInterpreterTest extends AbstractSignavioDMNInterp
         doTest(new DecisionTestConfig(
                 "decision",
                 "simple-decision-feel-enumeration-literal-expression",
-                makeRuntimeEnvironment(Arrays.asList(new Pair[]{
-                        new Pair("numberInput", decision.number("-1")),
-                        new Pair("stringInput", "123"),
-                        new Pair("booleanInput", true),
-                        new Pair("dateInput", decision.date("2017-01-01")),
-                        new Pair("enumerationInput", "e1")
-                })),
+                makeRuntimeEnvironment(Arrays.asList(
+                        new Pair<>("numberInput", decision.number("-1")),
+                        new Pair<>("stringInput", "123"),
+                        new Pair<>("booleanInput", true),
+                        new Pair<>("dateInput", decision.date("2017-01-01")),
+                        new Pair<>("enumerationInput", "e1")
+                )),
                 "e1")
         );
     }
@@ -88,13 +95,13 @@ public class ExportedLiteralDMNInterpreterTest extends AbstractSignavioDMNInterp
     public void testNumericLiteralExpression() throws Exception {
         doTest(new DecisionTestConfig("decision",
                 "simple-decision-feel-numeric-literal-expression",
-                makeRuntimeEnvironment(Arrays.asList(new Pair[]{
-                        new Pair("numberInput", decision.number("-1")),
-                        new Pair("stringInput", "123"),
-                        new Pair("booleanInput", true),
-                        new Pair("dateInput", decision.date("2017-01-01")),
-                        new Pair("enumerationInput", "e1")
-                })),
+                makeRuntimeEnvironment(Arrays.asList(
+                        new Pair<>("numberInput", decision.number("-1")),
+                        new Pair<>("stringInput", "123"),
+                        new Pair<>("booleanInput", true),
+                        new Pair<>("dateInput", decision.date("2017-01-01")),
+                        new Pair<>("enumerationInput", "e1")
+                )),
                 decision.number("5"))
         );
     }
@@ -103,24 +110,19 @@ public class ExportedLiteralDMNInterpreterTest extends AbstractSignavioDMNInterp
     public void testStringLiteralExpression() throws Exception {
         doTest(new DecisionTestConfig("decision",
                 "simple-decision-feel-string-literal-expression",
-                makeRuntimeEnvironment(Arrays.asList(new Pair[]{
-                        new Pair("numberInput", decision.number("-1")),
-                        new Pair("stringInput", "123"),
-                        new Pair("booleanInput", true),
-                        new Pair("dateInput", decision.date("2017-01-01")),
-                        new Pair("enumerationInput", "e1")
-                })),
+                makeRuntimeEnvironment(Arrays.asList(
+                        new Pair<>("numberInput", decision.number("-1")),
+                        new Pair<>("stringInput", "123"),
+                        new Pair<>("booleanInput", true),
+                        new Pair<>("dateInput", decision.date("2017-01-01")),
+                        new Pair<>("enumerationInput", "e1")
+                )),
                 "123abc")
         );
     }
 
     @Override
-    protected String getInputPath() {
-        return "dmn2java/exported/literal/input";
-    }
-
-    @Override
-    protected FEELLib getLib() {
+    protected FEELLib<BigDecimal, XMLGregorianCalendar, XMLGregorianCalendar, XMLGregorianCalendar, Duration> getLib() {
         return new DefaultSignavioBaseDecision();
     }
 }

@@ -12,6 +12,7 @@
  */
 package com.gs.dmn.feel.lib.type.time.xml;
 
+import com.gs.dmn.feel.lib.type.time.DurationLib;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.datatype.DatatypeConstants;
@@ -25,13 +26,14 @@ import java.time.temporal.TemporalAmount;
 import java.util.Arrays;
 import java.util.List;
 
-public class DefaultDurationLib {
+public class DefaultDurationLib implements DurationLib<XMLGregorianCalendar, javax.xml.datatype.Duration> {
     private final DatatypeFactory dataTypeFactory;
 
     public DefaultDurationLib(DatatypeFactory dataTypeFactory) {
         this.dataTypeFactory = dataTypeFactory;
     }
 
+    @Override
     public javax.xml.datatype.Duration duration(String from) {
         if (StringUtils.isBlank(from)) {
             return null;
@@ -40,6 +42,7 @@ public class DefaultDurationLib {
         return this.dataTypeFactory.newDuration(from);
     }
 
+    @Override
     public javax.xml.datatype.Duration yearsAndMonthsDuration(XMLGregorianCalendar from, XMLGregorianCalendar to) {
         if (from == null || to == null) {
             return null;
@@ -50,85 +53,91 @@ public class DefaultDurationLib {
         return this.toYearsMonthDuration(this.dataTypeFactory, toLocalDate, fromLocalDate);
     }
 
-    public Integer years(javax.xml.datatype.Duration duration) {
+    @Override
+    public Long years(javax.xml.datatype.Duration duration) {
         if (duration == null) {
             return null;
         }
 
-        if (isYearMonthsTime(duration)) {
-            return duration.getYears();
+        if (hasYearsOrMonths(duration)) {
+            return (long) duration.getYears();
         } else {
             return null;
         }
     }
 
-    public Integer months(javax.xml.datatype.Duration duration) {
+    @Override
+    public Long months(javax.xml.datatype.Duration duration) {
         if (duration == null) {
             return null;
         }
 
-        if (isYearMonthsTime(duration)) {
-            return duration.getMonths();
+        if (hasYearsOrMonths(duration)) {
+            return (long) duration.getMonths();
         } else {
             return null;
         }
     }
 
-    public Integer days(javax.xml.datatype.Duration duration) {
+    @Override
+    public Long days(javax.xml.datatype.Duration duration) {
         if (duration == null) {
             return null;
         }
 
-        if (isDayTime(duration)) {
-            return duration.getDays();
+        if (hasDayOrTime(duration)) {
+            return (long) duration.getDays();
         } else {
             return null;
         }
     }
 
-    public Integer hours(javax.xml.datatype.Duration duration) {
+    @Override
+    public Long hours(javax.xml.datatype.Duration duration) {
         if (duration == null) {
             return null;
         }
 
-        if (isDayTime(duration)) {
-            return duration.getHours();
+        if (hasDayOrTime(duration)) {
+            return (long) duration.getHours();
         } else {
             return null;
         }
     }
 
-    public Integer minutes(javax.xml.datatype.Duration duration) {
+    @Override
+    public Long minutes(javax.xml.datatype.Duration duration) {
         if (duration == null) {
             return null;
         }
 
-        if (isDayTime(duration)) {
-            return duration.getMinutes();
+        if (hasDayOrTime(duration)) {
+            return (long) duration.getMinutes();
         } else {
             return null;
         }
     }
 
-    public Integer seconds(javax.xml.datatype.Duration duration) {
+    @Override
+    public Long seconds(javax.xml.datatype.Duration duration) {
         if (duration == null) {
             return null;
         }
 
-        if (isDayTime(duration)) {
-            return duration.getSeconds();
+        if (hasDayOrTime(duration)) {
+            return (long) duration.getSeconds();
         } else {
             return null;
         }
     }
 
-    private boolean isYearMonthsTime(javax.xml.datatype.Duration duration) {
+    private boolean hasYearsOrMonths(javax.xml.datatype.Duration duration) {
         return duration.isSet(DatatypeConstants.YEARS)
                 || duration.isSet(DatatypeConstants.MONTHS)
                 ;
     }
 
-    private boolean isDayTime(javax.xml.datatype.Duration duration) {
+    private boolean hasDayOrTime(javax.xml.datatype.Duration duration) {
         return duration.isSet(DatatypeConstants.DAYS)
                 || duration.isSet(DatatypeConstants.HOURS)
                 || duration.isSet(DatatypeConstants.MINUTES)

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
     Copyright 2016 Goldman Sachs.
@@ -18,7 +19,7 @@
     <parent>
         <groupId>com.goldmansachs.jdmn</groupId>
         <artifactId>jdmn-parent</artifactId>
-        <version>3.8.2-SNAPSHOT</version>
+        <version>4.2.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>jdmn-aggregate</artifactId>
@@ -53,12 +54,6 @@
 
         <dependency>
             <groupId>com.goldmansachs.jdmn</groupId>
-            <artifactId>jdmn-tck-integration-tests-interpreter</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.goldmansachs.jdmn</groupId>
             <artifactId>jdmn-tck-integration-tests-translator</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -71,13 +66,13 @@
         </dependency>
         <dependency>
             <groupId>com.goldmansachs.jdmn</groupId>
-            <artifactId>jdmn-signavio-integration-tests-interpreter</artifactId>
+            <artifactId>jdmn-signavio-integration-tests-translator</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.goldmansachs.jdmn</groupId>
-            <artifactId>jdmn-signavio-integration-tests-translator</artifactId>
+            <artifactId>jdmn-signavio-integration-tests-kotlin-translator</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -94,10 +89,15 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.version}</version>
+                <version>${jacoco.plugin.version}</version>
                 <configuration>
                     <excludes>
+                        <!-- OMG DMN -->
                         <exclude>org/omg/**/*</exclude>
+                        <!-- JPA integration -->
+                        <exclude>com/gs/jpa/**/*</exclude>
+                        <!-- Signavio integration -->
+                        <exclude>com/gs/**/jmh/**/*</exclude>
                     </excludes>
                 </configuration>
                 <executions>

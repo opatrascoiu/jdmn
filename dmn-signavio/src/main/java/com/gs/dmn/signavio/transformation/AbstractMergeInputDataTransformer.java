@@ -23,12 +23,11 @@ import com.gs.dmn.signavio.testlab.TestCase;
 import com.gs.dmn.signavio.testlab.TestLab;
 import com.gs.dmn.signavio.testlab.expression.Expression;
 import com.gs.dmn.transformation.SimpleDMNTransformer;
-import org.omg.spec.dmn._20180521.model.*;
+import org.omg.spec.dmn._20191111.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
 import java.util.*;
 
 public abstract class AbstractMergeInputDataTransformer extends SimpleDMNTransformer<TestLab> {
@@ -39,7 +38,7 @@ public abstract class AbstractMergeInputDataTransformer extends SimpleDMNTransfo
     private Map<String, Pair<TInputData, List<TInputData>>> inputDataClasses;
     private boolean forceMerge = true;
 
-    public AbstractMergeInputDataTransformer() {
+    protected AbstractMergeInputDataTransformer() {
         this(new Slf4jBuildLogger(LOGGER));
     }
 
@@ -61,22 +60,33 @@ public abstract class AbstractMergeInputDataTransformer extends SimpleDMNTransfo
 
     @Override
     public DMNModelRepository transform(DMNModelRepository repository) {
-        this.inputDataClasses = new LinkedHashMap<>();
+        if (isEmpty(repository)) {
+            logger.warn("DMN repository is empty; transformer will not run");
+            return repository;
+        }
 
+        this.inputDataClasses = new LinkedHashMap<>();
         return mergeInputData(repository, logger);
     }
 
     @Override
-    public Pair<DMNModelRepository, List<TestLab>> transform(DMNModelRepository repository, List<TestLab> testLabList) {
+    public Pair<DMNModelRepository, List<TestLab>> transform(DMNModelRepository repository, List<TestLab> testCasesList) {
+        if (isEmpty(repository, testCasesList)) {
+            logger.warn("DMN repository or test cases list is empty; transformer will not run");
+            return new Pair<>(repository, testCasesList);
+        }
+
+        // Transform model
         if (inputDataClasses == null) {
             transform(repository);
         }
 
-        for (TestLab testLab: testLabList) {
+        // Transform test cases
+        for (TestLab testLab: testCasesList) {
             transform(testLab, (SignavioDMNModelRepository) repository);
         }
 
-        return new Pair<>(repository.clone(), testLabList);
+        return new Pair<>(repository.copy(), testCasesList);
     }
 
     private void transform(TestLab testLab, SignavioDMNModelRepository repository) {
@@ -120,10 +130,8 @@ public abstract class AbstractMergeInputDataTransformer extends SimpleDMNTransfo
                     throw new DMNRuntimeException(String.format("Cannot find InputData for input parameter with requirementName='%s'", requirementName));
                 }
                 TInputData representative = pair.getLeft();
-                QName diagramIdQName = repository.getDiagramIdQName();
-                String representativeDiagramId = representative.getOtherAttributes().get(diagramIdQName);
-                QName shapeIdQName = repository.getShapeIdQName();
-                String representativeShapeId = representative.getOtherAttributes().get(shapeIdQName);
+                String representativeDiagramId = repository.getDiagramId(representative);
+                String representativeShapeId = repository.getShapeId(representative);
                 ipd.setDiagramId(representativeDiagramId);
                 ipd.setShapeId(representativeShapeId);
             }
@@ -221,7 +229,7 @@ public abstract class AbstractMergeInputDataTransformer extends SimpleDMNTransfo
             }
         }
 
-        return repository.clone();
+        return repository.copy();
     }
 
     private Map<String, Pair<TInputData, List<TInputData>>> inputDataEquivalenceClasses(DMNModelRepository dmnModelRepository) {

@@ -12,6 +12,7 @@
  */
 package com.gs.dmn.signavio.runtime.interpreter;
 
+import com.gs.dmn.AbstractTest;
 import com.gs.dmn.DMNModelRepository;
 import com.gs.dmn.dialect.DMNDialectDefinition;
 import com.gs.dmn.feel.lib.FEELLib;
@@ -27,21 +28,25 @@ import com.gs.dmn.serialization.DMNReader;
 import com.gs.dmn.serialization.PrefixNamespaceMappings;
 import com.gs.dmn.signavio.SignavioDMNModelRepository;
 import com.gs.dmn.signavio.dialect.SignavioDMNDialectDefinition;
-import org.omg.spec.dmn._20180521.model.TDRGElement;
-import org.omg.spec.dmn._20180521.model.TDefinitions;
+import com.gs.dmn.signavio.testlab.TestLab;
+import com.gs.dmn.transformation.InputParameters;
+import org.omg.spec.dmn._20191111.model.TDRGElement;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
-import java.util.LinkedHashMap;
+import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.math.BigDecimal;
+import java.net.URI;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractSignavioDMNInterpreterTest {
+public abstract class AbstractSignavioDMNInterpreterTest extends AbstractTest {
     private static final BuildLogger LOGGER = new Slf4jBuildLogger(LoggerFactory.getLogger(AbstractSignavioDMNInterpreterTest.class));
 
     private final DMNReader reader = new DMNReader(LOGGER, false);
-    private final DMNDialectDefinition dialectDefinition = new SignavioDMNDialectDefinition();
+    private final DMNDialectDefinition<BigDecimal, XMLGregorianCalendar, XMLGregorianCalendar, XMLGregorianCalendar, Duration, TestLab> dialectDefinition = new SignavioDMNDialectDefinition();
 
     protected void doTest(DecisionTestConfig config) throws Exception {
         doTest(config.getDecisionName(), config.getDiagramName(), config.getRuntimeContext(), config.getExpectedResult());
@@ -51,10 +56,10 @@ public abstract class AbstractSignavioDMNInterpreterTest {
         String errorMessage = String.format("Tested failed for diagram '%s'", diagramName);
         try {
             String pathName = getInputPath() + "/" + diagramName + DMNConstants.DMN_FILE_EXTENSION;
-            URL url = getClass().getClassLoader().getResource(pathName).toURI().toURL();
-            Pair<TDefinitions, PrefixNamespaceMappings> pair = reader.read(url);
+            URI uri = signavioResource(pathName);
+            Pair<TDefinitions, PrefixNamespaceMappings> pair = reader.read(uri.toURL());
             DMNModelRepository repository = new SignavioDMNModelRepository(pair, "http://www.provider.com/schema/dmn/1.1/");
-            DMNInterpreter interpreter = dialectDefinition.createDMNInterpreter(repository, new LinkedHashMap<>());
+            DMNInterpreter<BigDecimal, XMLGregorianCalendar, XMLGregorianCalendar, XMLGregorianCalendar, Duration> interpreter = dialectDefinition.createDMNInterpreter(repository, makeInputParameters());
 
             TDRGElement decision = repository.findDRGElementByName(repository.getRootDefinitions(), decisionName);
             Result actualResult = interpreter.evaluate(repository.makeDRGElementReference(decision), null, runtimeEnvironment);
@@ -64,6 +69,11 @@ public abstract class AbstractSignavioDMNInterpreterTest {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    @Override
+    protected InputParameters makeInputParameters() {
+        return new InputParameters(makeInputParametersMap());
     }
 
     protected RuntimeEnvironment makeRuntimeEnvironment(List<Pair<String, ?>> pairs) {
@@ -76,5 +86,5 @@ public abstract class AbstractSignavioDMNInterpreterTest {
 
     protected abstract String getInputPath();
 
-    protected abstract FEELLib getLib();
+    protected abstract FEELLib<BigDecimal, XMLGregorianCalendar, XMLGregorianCalendar, XMLGregorianCalendar, Duration> getLib();
 }

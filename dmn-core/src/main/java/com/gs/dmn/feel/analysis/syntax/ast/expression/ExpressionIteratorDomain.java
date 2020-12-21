@@ -12,7 +12,6 @@
  */
 package com.gs.dmn.feel.analysis.syntax.ast.expression;
 
-import com.gs.dmn.feel.analysis.semantics.environment.Environment;
 import com.gs.dmn.feel.analysis.semantics.type.Type;
 import com.gs.dmn.feel.analysis.syntax.ast.FEELContext;
 import com.gs.dmn.feel.analysis.syntax.ast.Visitor;
@@ -29,7 +28,7 @@ public class ExpressionIteratorDomain extends IteratorDomain {
         return expression;
     }
 
-    public void deriveType(Environment environment) {
+    public void deriveType(FEELContext context) {
         this.type = expression.getType();
     }
 

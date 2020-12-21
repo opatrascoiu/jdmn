@@ -12,20 +12,22 @@
  */
 package com.gs.dmn.signavio.rdf2dmn;
 
+import com.gs.dmn.AbstractTest;
 import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.log.Slf4jBuildLogger;
 import com.gs.dmn.runtime.DMNRuntimeException;
 import com.gs.dmn.serialization.DMNConstants;
 import com.gs.dmn.transformation.FileTransformer;
+import com.gs.dmn.transformation.InputParameters;
 import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
-import org.omg.spec.dmn._20180521.model.TDMNElement;
-import org.omg.spec.dmn._20180521.model.TLiteralExpression;
-import org.omg.spec.dmn._20180521.model.TNamedElement;
+import org.omg.spec.dmn._20191111.model.TDMNElement;
+import org.omg.spec.dmn._20191111.model.TLiteralExpression;
+import org.omg.spec.dmn._20191111.model.TNamedElement;
 import org.slf4j.LoggerFactory;
 import org.xmlunit.validation.Languages;
 import org.xmlunit.validation.ValidationProblem;
@@ -36,11 +38,8 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.gs.dmn.serialization.DMNVersion.DMN_11;
@@ -48,7 +47,7 @@ import static com.gs.dmn.signavio.rdf2dmn.RDFToDMNTransformer.RDF_FILE_EXTENSION
 import static com.gs.dmn.signavio.rdf2dmn.RDFToDMNTransformer.isRDFFile;
 import static org.junit.Assert.*;
 
-public abstract class AbstractRDFToDMNTransformerTest {
+public abstract class AbstractRDFToDMNTransformerTest extends AbstractTest {
     private static final BuildLogger LOGGER = new Slf4jBuildLogger(LoggerFactory.getLogger(AbstractRDFToDMNTransformerTest.class));
     private final String schemaVersion = "1.1";
 
@@ -81,12 +80,12 @@ public abstract class AbstractRDFToDMNTransformerTest {
         File outputFolder = new File(outputPath);
         outputFolder.mkdirs();
 
-        RDFToDMNTransformer transformer = (RDFToDMNTransformer) makeTransformer(makeInputParameters(), LOGGER);
+        RDFToDMNTransformer transformer = (RDFToDMNTransformer) makeTransformer(new InputParameters(makeInputParametersMap()), LOGGER);
         transformer.transform(path(inputPath), new File(outputPath).toPath());
 
         File actualOutputFile = new File(outputFolder, diagramName + DMNConstants.DMN_FILE_EXTENSION);
         String resourcePath = expectedDMNPath + "/" + diagramName + DMNConstants.DMN_FILE_EXTENSION;
-        URI resource = resource(resourcePath);
+        URI resource = signavioResource(resourcePath);
         if (resource != null) {
             File expectedOutputFile = new File(resource.getPath());
             compareFile(expectedOutputFile, actualOutputFile);
@@ -105,20 +104,6 @@ public abstract class AbstractRDFToDMNTransformerTest {
         }
     }
 
-    private URI resource(String path) {
-        try {
-            URL url = this.getClass().getClassLoader().getResource(path);
-            return url == null ? null : url.toURI();
-        } catch (URISyntaxException e) {
-            throw new DMNRuntimeException(e);
-        }
-    }
-
-    private Path path(String path) {
-        File file = new File(resource(path));
-        return file.toPath();
-    }
-
     private void createEmptyDMNFile(String resourcePath) throws IOException {
         File file = new File("src/test/resources" +
                 (resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath));
@@ -132,7 +117,7 @@ public abstract class AbstractRDFToDMNTransformerTest {
 
     private final SAXBuilder builder = new SAXBuilder();
 
-    private FileTransformer makeTransformer(Map<String, String> inputParameters, BuildLogger logger) {
+    private FileTransformer makeTransformer(InputParameters inputParameters, BuildLogger logger) {
         return new RDFToDMNTransformer(inputParameters, logger);
     }
 
@@ -168,18 +153,6 @@ public abstract class AbstractRDFToDMNTransformerTest {
         }
     }
 
-    private String getInputPath() {
-        return "rdf2java/rdf/" + getTestFolder();
-    }
-
-    private String getOutputPath() {
-        return "target/rdf2dmn/" + getTestFolder() + "/";
-    }
-
-    private String getExpectedPath() {
-        return "rdf2java/dmn/" + getTestFolder();
-    }
-
     protected void assertLiteralExpression(TLiteralExpression inputExpression, String stringType, String id, String text) {
         assertEquals(id, inputExpression.getId());
         assertEquals(stringType, inputExpression.getTypeRef());
@@ -196,11 +169,28 @@ public abstract class AbstractRDFToDMNTransformerTest {
         assertEquals(label, decision.getLabel());
     }
 
-    protected Map<String, String> makeInputParameters() {
-        return new LinkedHashMap<String, String>() {{
-            put("namespace", "http://www.gs.com/cip");
-            put("prefix", "cip");
-        }};
+    protected Map<String, String> makeInputParametersMap() {
+        Map<String, String> map = super.makeInputParametersMap();
+        map.put("namespace", "http://www.gs.com/cip");
+        map.put("prefix", "cip");
+        return map;
+    }
+
+    private Path path(String path) {
+        File file = new File(signavioResource(path));
+        return file.toPath();
+    }
+
+    private String getInputPath() {
+        return "rdf/" + getTestFolder();
+    }
+
+    private String getOutputPath() {
+        return "target/rdf2dmn/" + getTestFolder() + "/";
+    }
+
+    private String getExpectedPath() {
+        return "rdf/rdf2dmn/expected/" + getTestFolder();
     }
 
     protected abstract String getTestFolder();

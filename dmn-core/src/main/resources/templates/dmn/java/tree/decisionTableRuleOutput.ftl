@@ -1,10 +1,22 @@
+<#--
+    Copyright 2016 Goldman Sachs.
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+
+    You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations under the License.
+-->
 <#if javaPackageName?has_content>
 package ${javaPackageName};
 </#if>
 
 import java.util.*;
 
-@javax.annotation.Generated(value = {"decisionTableRuleOutput.ftl", "${modelRepository.name(drgElement)}"})
+@javax.annotation.Generated(value = {"decisionTableRuleOutput.ftl", "${transformer.escapeInString(modelRepository.name(drgElement))}"})
 public class ${javaClassName} extends ${transformer.abstractRuleOutputClassName()} {
     <#if modelRepository.isDecisionTableExpression(drgElement)>
     <@addPrivateFields drgElement />
@@ -26,7 +38,7 @@ public class ${javaClassName} extends ${transformer.abstractRuleOutputClassName(
 <#macro addPrivateFields drgElement>
     <#assign expression = modelRepository.expression(drgElement)>
     <#list expression.output as output>
-    private ${transformer.outputClauseClassName(drgElement, output)} ${transformer.outputClauseVariableName(drgElement, output)};
+    private ${transformer.outputClauseClassName(drgElement, output, output?index)} ${transformer.outputClauseVariableName(drgElement, output)};
     <#if modelRepository.isOutputOrderHit(expression.hitPolicy)>
     private Integer ${transformer.outputClausePriorityVariableName(drgElement, output)};
     </#if>
@@ -36,10 +48,13 @@ public class ${javaClassName} extends ${transformer.abstractRuleOutputClassName(
 <#macro addAccessors drgElement>
     <#assign expression = modelRepository.expression(drgElement)>
     <#list expression.output as output>
-    public ${transformer.outputClauseClassName(drgElement, output)} ${transformer.getter(drgElement, output)} {
+    @com.fasterxml.jackson.annotation.JsonGetter("${transformer.escapeInString(transformer.outputClauseName(drgElement, output))}")
+    public ${transformer.outputClauseClassName(drgElement, output, output?index)} ${transformer.getter(drgElement, output)} {
         return this.${transformer.outputClauseVariableName(drgElement, output)};
     }
-    public void ${transformer.setter(drgElement, output)}(${transformer.outputClauseClassName(drgElement, output)} ${transformer.outputClauseVariableName(drgElement, output)}) {
+
+    @com.fasterxml.jackson.annotation.JsonSetter("${transformer.escapeInString(transformer.outputClauseName(drgElement, output))}")
+    public void ${transformer.setter(drgElement, output)}(${transformer.outputClauseClassName(drgElement, output, output?index)} ${transformer.outputClauseVariableName(drgElement, output)}) {
         this.${transformer.outputClauseVariableName(drgElement, output)} = ${transformer.outputClauseVariableName(drgElement, output)};
     }
     <#if modelRepository.isOutputOrderHit(expression.hitPolicy)>
@@ -98,7 +113,7 @@ public class ${javaClassName} extends ${transformer.abstractRuleOutputClassName(
     @Override
     public List<${transformer.abstractRuleOutputClassName()}> sort(List<${transformer.abstractRuleOutputClassName()}> matchedResults_) {
     <#list expression.output as output>
-        List<${transformer.pairClassName()}<${transformer.outputClauseClassName(drgElement, output)}, Integer>> ${transformer.outputClauseVariableName(drgElement, output)}Pairs = new ArrayList<>();
+        List<${transformer.pairClassName()}<${transformer.outputClauseClassName(drgElement, output, output?index)}, Integer>> ${transformer.outputClauseVariableName(drgElement, output)}Pairs = new ArrayList<>();
         matchedResults_.forEach(matchedResult_ -> {
             ${transformer.outputClauseVariableName(drgElement, output)}Pairs.add(new ${transformer.pairClassName()}(((${javaClassName})matchedResult_).${transformer.getter(drgElement, output)}, ((${javaClassName})matchedResult_).${transformer.priorityGetter(drgElement, output)}));
         });

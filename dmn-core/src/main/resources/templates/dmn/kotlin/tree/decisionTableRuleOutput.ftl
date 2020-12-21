@@ -1,3 +1,15 @@
+<#--
+    Copyright 2016 Goldman Sachs.
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+
+    You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations under the License.
+-->
 <#if javaPackageName?has_content>
 package ${javaPackageName}
 </#if>
@@ -18,7 +30,8 @@ class ${javaClassName}(matched: Boolean) : ${transformer.abstractRuleOutputClass
 <#macro addPrivateFields drgElement>
     <#assign expression = modelRepository.expression(drgElement)>
     <#list expression.output as output>
-    var ${transformer.outputClauseVariableName(drgElement, output)}: ${transformer.outputClauseClassName(drgElement, output)}? = null
+    @com.fasterxml.jackson.annotation.JsonProperty("${transformer.escapeInString(transformer.outputClauseName(drgElement, output))}")
+    var ${transformer.outputClauseVariableName(drgElement, output)}: ${transformer.outputClauseClassName(drgElement, output, output?index)}? = null
     <#if modelRepository.isOutputOrderHit(expression.hitPolicy)>
     var ${transformer.outputClausePriorityVariableName(drgElement, output)}: Int? = 0
     </#if>
@@ -27,8 +40,8 @@ class ${javaClassName}(matched: Boolean) : ${transformer.abstractRuleOutputClass
 
 <#macro addEqualsAndHashCode itemDefinition >
     override fun equals(o: Any?): Boolean {
-        if (this == o) return true
-        if (o == null || javaClass != o.javaClass) return false
+        if (this === o) return true
+        if (javaClass != o?.javaClass) return false
 
         val other = o as ${javaClassName}
         <#assign expression = modelRepository.expression(drgElement)>
@@ -66,7 +79,7 @@ class ${javaClassName}(matched: Boolean) : ${transformer.abstractRuleOutputClass
 
     override fun sort(matchedResults_: MutableList<${transformer.abstractRuleOutputClassName()}>): MutableList<${transformer.abstractRuleOutputClassName()}> {
     <#list expression.output as output>
-        val ${transformer.outputClauseVariableName(drgElement, output)}Pairs: MutableList<${transformer.pairClassName()}<${transformer.outputClauseClassName(drgElement, output)}?, Int?>> = ArrayList()
+        val ${transformer.outputClauseVariableName(drgElement, output)}Pairs: MutableList<${transformer.pairClassName()}<${transformer.outputClauseClassName(drgElement, output, output?index)}?, Int?>> = ArrayList()
         matchedResults_.forEach({ (it as ${javaClassName})
             ${transformer.outputClauseVariableName(drgElement, output)}Pairs.add(${transformer.pairClassName()}(it.${transformer.outputClauseVariableName(drgElement, output)}, it.${transformer.outputClausePriorityVariableName(drgElement, output)}))
         })

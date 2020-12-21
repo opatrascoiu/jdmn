@@ -17,22 +17,22 @@ import com.gs.dmn.feel.analysis.syntax.ast.FEELContext;
 import com.gs.dmn.feel.analysis.syntax.ast.expression.function.FunctionDefinition;
 import com.gs.dmn.feel.lib.DefaultFEELLib;
 import com.gs.dmn.feel.synthesis.FEELTranslator;
-import com.gs.dmn.feel.synthesis.expression.NativeExpressionFactory;
 import com.gs.dmn.runtime.LambdaExpression;
-import com.gs.dmn.transformation.basic.BasicDMN2JavaTransformer;
+import com.gs.dmn.transformation.basic.BasicDMNToNativeTransformer;
+import com.gs.dmn.transformation.native_.NativeFactory;
 import javassist.*;
 
 public class JavaAssistCompiler extends JavaCompilerImpl {
     @Override
-    public ClassData makeClassData(FunctionDefinition element, FEELContext context, BasicDMN2JavaTransformer dmnTransformer, FEELTranslator feelTranslator, String libClassName) {
+    public ClassData makeClassData(FunctionDefinition element, FEELContext context, BasicDMNToNativeTransformer dmnTransformer, FEELTranslator feelTranslator, String libClassName) {
         FunctionType functionType = (FunctionType) element.getType();
 
         // Apply method parts
         String signature = "Object[] args";
         boolean convertToContext = true;
-        String body = feelTranslator.expressionToJava(element.getBody(), context);
-        NativeExpressionFactory expressionFactory = dmnTransformer.getExpressionFactory();
-        String applyMethod = expressionFactory.applyMethod(functionType, signature, convertToContext, body);
+        String body = feelTranslator.expressionToNative(element.getBody(), context);
+        NativeFactory nativeFactory = dmnTransformer.getNativeFactory();
+        String applyMethod = nativeFactory.applyMethod(functionType, signature, convertToContext, body);
 
         String bridgeMethodText = bridgeMethodText();
 
@@ -73,6 +73,10 @@ public class JavaAssistCompiler extends JavaCompilerImpl {
         lambdaImplClass.addMethod(applyBridgeMethod);
 
         return lambdaImplClass.toClass();
+    }
+
+    @Override
+    public void deleteLambdaClass(Object lambdaExpression) {
     }
 
     private CtClass resolveClass(Class<?> cls) throws NotFoundException {

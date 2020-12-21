@@ -13,6 +13,7 @@
 package com.gs.dmn.feel.lib;
 
 import com.gs.dmn.runtime.LambdaExpression;
+import com.gs.dmn.runtime.Pair;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -52,17 +53,32 @@ public abstract class BaseStandardFEELLibTest<NUMBER, DATE, TIME, DATE_TIME, DUR
         assertEquals("P1Y8M", getLib().duration("P1Y8M").toString());
         assertEquals("P2DT20H", getLib().duration("P2DT20H").toString());
         assertEquals("-PT2H", getLib().duration("-PT2H").toString());
+
+        List<Pair<String, String>> pairs = Arrays.asList(
+//                new Pair<>("P83333333Y3M", "P999999999M"),
+//                new Pair<>("-P83333333Y3M","-P999999999M"),
+                new Pair<>("P367DT6H58M59S","P1Y0M2DT6H58M59.000S")
+// Overflow in duration(from)
+//                new Pair<>("P99999999Y", "P11999999988M"),
+//                new Pair<>("-P99999999Y", "P2129706043D")
+        );
+        for (Pair<String, String> pair: pairs) {
+            DURATION duration = makeDuration(pair.getLeft());
+            DURATION normalizedDuration = makeDuration(pair.getRight());
+            assertTrue(String.format("Error for '%s'", pair.toString()), getLib().durationEqual(duration, normalizedDuration));
+        }
+
     }
 
     @Test
     public void testYearsAndMonthsDuration() {
         assertNull(getLib().yearsAndMonthsDuration(null, null));
 
-        assertEquals("P0Y0M", getLib().yearsAndMonthsDuration(makeDateAndTime("2015-12-24T12:15:00.000+01:00"), makeDateAndTime("2015-12-24T12:15:00.000+01:00")).toString());
-        assertEquals("P1Y2M", getLib().yearsAndMonthsDuration(makeDateAndTime("2016-09-30T23:25:00"), makeDateAndTime("2017-12-28T12:12:12")).toString());
-        assertEquals("P7Y6M", getLib().yearsAndMonthsDuration(makeDateAndTime("2010-05-30T03:55:58"), makeDateAndTime("2017-12-15T00:59:59")).toString());
-        assertEquals("-P4033Y2M", getLib().yearsAndMonthsDuration(makeDateAndTime("2014-12-31T23:59:59"), makeDateAndTime("-2019-10-01T12:32:59")).toString());
-        assertEquals("-P4035Y11M", getLib().yearsAndMonthsDuration(makeDateAndTime("2017-09-05T10:20:00-01:00"), makeDateAndTime("-2019-10-01T12:32:59+02:00")).toString());
+        assertEquals("P0Y0M", getLib().yearsAndMonthsDuration(makeDate("2015-12-24"), makeDate("2015-12-24")).toString());
+        assertEquals("P1Y2M", getLib().yearsAndMonthsDuration(makeDate("2016-09-30"), makeDate("2017-12-28")).toString());
+        assertEquals("P7Y6M", getLib().yearsAndMonthsDuration(makeDate("2010-05-30"), makeDate("2017-12-15")).toString());
+        assertEquals("-P4033Y2M", getLib().yearsAndMonthsDuration(makeDate("2014-12-31"), makeDate("-2019-10-01")).toString());
+        assertEquals("-P4035Y11M", getLib().yearsAndMonthsDuration(makeDate("2017-09-05"), makeDate("-2019-10-01")).toString());
     }
 
     //
@@ -539,6 +555,10 @@ public abstract class BaseStandardFEELLibTest<NUMBER, DATE, TIME, DATE_TIME, DUR
         assertNull(getLib().insertBefore(null, null, null));
 
         assertEquals(makeNumberList("2", "1", "3"), getLib().insertBefore(makeNumberList(1, 3), makeNumber("1"), makeNumber("2")));
+        assertEquals(makeNumberList("1", "2", "4", "3"), getLib().insertBefore(makeNumberList(1, 2, 3), makeNumber("-1"), makeNumber("4")));
+        // Out of bounds
+        assertEquals(makeNumberList("1", "2", "3"), getLib().insertBefore(makeNumberList(1, 2, 3), makeNumber("5"), makeNumber("4")));
+        assertEquals(makeNumberList("1", "2", "3"), getLib().insertBefore(makeNumberList(1, 2, 3), makeNumber("-5"), makeNumber("4")));
     }
 
     @Test

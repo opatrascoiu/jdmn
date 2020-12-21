@@ -18,6 +18,9 @@ import java.util.List;
 
 public class TestLabValidator {
     public void validate(TestLab testLab) {
+        if (testLab == null) {
+            throw new DMNRuntimeException("Missing or empty TestLab");
+        }
         List<OutputParameterDefinition> outputParameterDefinitions = testLab.getOutputParameterDefinitions();
         if (outputParameterDefinitions == null || outputParameterDefinitions.isEmpty()) {
             throw new DMNRuntimeException(String.format("Missing or empty OutputParameterDefinitions for TestLab '%s'", testLab.getSource()));

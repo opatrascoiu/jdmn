@@ -23,11 +23,11 @@ import com.gs.dmn.feel.analysis.syntax.ast.expression.Name;
 import com.gs.dmn.feel.analysis.syntax.ast.expression.QualifiedName;
 import com.gs.dmn.feel.analysis.syntax.ast.expression.literal.DateTimeLiteral;
 import com.gs.dmn.runtime.DMNRuntimeException;
-import com.gs.dmn.transformation.basic.BasicDMN2JavaTransformer;
+import com.gs.dmn.transformation.basic.BasicDMNToNativeTransformer;
 import com.gs.dmn.transformation.basic.ImportContextType;
 import org.apache.commons.lang3.StringUtils;
-import org.omg.spec.dmn._20180521.model.TBusinessKnowledgeModel;
-import org.omg.spec.dmn._20180521.model.TDRGElement;
+import org.omg.spec.dmn._20191111.model.TBusinessKnowledgeModel;
+import org.omg.spec.dmn._20191111.model.TDRGElement;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -61,7 +61,7 @@ public abstract class AbstractFEELToJavaVisitor extends AbstractAnalysisVisitor 
         FEEL_2_JAVA_FUNCTION.put("date and time", "dateAndTime");
     }
 
-    public AbstractFEELToJavaVisitor(BasicDMN2JavaTransformer dmnTransformer) {
+    public AbstractFEELToJavaVisitor(BasicDMNToNativeTransformer dmnTransformer) {
         super(dmnTransformer);
     }
 
@@ -88,15 +88,15 @@ public abstract class AbstractFEELToJavaVisitor extends AbstractAnalysisVisitor 
             }
         } else if (sourceType instanceof ItemDefinitionType) {
             Type memberType = ((ItemDefinitionType) sourceType).getMemberType(memberName);
-            String javaType = dmnTransformer.toJavaType(memberType);
-            return this.expressionFactory.makeItemDefinitionAccessor(javaType, source, memberName);
+            String javaType = dmnTransformer.toNativeType(memberType);
+            return this.nativeFactory.makeItemDefinitionAccessor(javaType, source, memberName);
         } else if (sourceType instanceof ContextType) {
             Type memberType = ((ContextType) sourceType).getMemberType(memberName);
-            String javaType = dmnTransformer.toJavaType(memberType);
-            return this.expressionFactory.makeContextAccessor(javaType, source, memberName);
+            String javaType = dmnTransformer.toNativeType(memberType);
+            return this.nativeFactory.makeContextAccessor(javaType, source, memberName);
         } else if (sourceType instanceof ListType) {
             String filter = makeNavigation(element, ((ListType) sourceType).getElementType(), "x", memberName, memberVariableName);
-            return this.expressionFactory.makeCollectionMap(source, filter);
+            return this.nativeFactory.makeCollectionMap(source, filter);
         } else if (sourceType instanceof DateType) {
             return String.format("%s(%s)", javaMemberFunctionName(memberName), source);
         } else if (sourceType instanceof TimeType) {
@@ -107,7 +107,7 @@ public abstract class AbstractFEELToJavaVisitor extends AbstractAnalysisVisitor 
             return String.format("%s(%s)", javaMemberFunctionName(memberName), source);
         } else if (sourceType instanceof AnyType) {
             // source is Context
-            return this.expressionFactory.makeContextSelectExpression(dmnTransformer.contextClassName(), source, memberName);
+            return this.nativeFactory.makeContextSelectExpression(dmnTransformer.contextClassName(), source, memberName);
         } else {
             throw new SemanticError(element, String.format("Cannot generate navigation path '%s'", element.toString()));
         }
@@ -125,29 +125,29 @@ public abstract class AbstractFEELToJavaVisitor extends AbstractAnalysisVisitor 
     protected String javaFriendlyVariableName(String name) {
         name = dmnTransformer.getDMNModelRepository().removeSingleQuotes(name);
         String firstChar = Character.toString(Character.toLowerCase(name.charAt(0)));
-        return dmnTransformer.javaFriendlyName(name.length() == 1 ? firstChar : firstChar + name.substring(1));
+        return dmnTransformer.nativeFriendlyName(name.length() == 1 ? firstChar : firstChar + name.substring(1));
     }
 
     protected Object makeCondition(String feelOperator, Expression leftOperand, Expression rightOperand, FEELContext context) {
         String leftOpd = (String) leftOperand.accept(this, context);
         String rightOpd = (String) rightOperand.accept(this, context);
-        JavaOperator javaOperator = OperatorDecisionTable.javaOperator(feelOperator, leftOperand.getType(), rightOperand.getType());
+        NativeOperator javaOperator = OperatorDecisionTable.javaOperator(feelOperator, leftOperand.getType(), rightOperand.getType());
         return makeCondition(feelOperator, leftOpd, rightOpd, javaOperator);
     }
 
-    protected String makeCondition(String feelOperator, String leftOpd, String rightOpd, JavaOperator javaOperator) {
+    protected String makeCondition(String feelOperator, String leftOpd, String rightOpd, NativeOperator javaOperator) {
         if (javaOperator == null) {
             throw new DMNRuntimeException(String.format("Operator '%s' cannot be applied to '%s' and '%s'", feelOperator, leftOpd, rightOpd));
         } else {
             if (javaOperator.getCardinality() == 2) {
-                if (javaOperator.getNotation() == JavaOperator.Notation.FUNCTIONAL) {
-                    if (javaOperator.getAssociativity() == JavaOperator.Associativity.LEFT_RIGHT) {
+                if (javaOperator.getNotation() == NativeOperator.Notation.FUNCTIONAL) {
+                    if (javaOperator.getAssociativity() == NativeOperator.Associativity.LEFT_RIGHT) {
                         return functionalExpression(javaOperator.getName(), leftOpd, rightOpd);
                     } else {
                         return functionalExpression(javaOperator.getName(), rightOpd, leftOpd);
                     }
                 } else {
-                    if (javaOperator.getAssociativity() == JavaOperator.Associativity.LEFT_RIGHT) {
+                    if (javaOperator.getAssociativity() == NativeOperator.Associativity.LEFT_RIGHT) {
                         return infixExpression(javaOperator.getName(), leftOpd, rightOpd);
                     } else {
                         return infixExpression(javaOperator.getName(), rightOpd, leftOpd);
@@ -160,7 +160,7 @@ public abstract class AbstractFEELToJavaVisitor extends AbstractAnalysisVisitor 
     }
 
     protected String listTestOperator(String feelOperatorName, Expression leftOperand, Expression rightOperand) {
-        JavaOperator javaOperator = OperatorDecisionTable.javaOperator(feelOperatorName, rightOperand.getType(), rightOperand.getType());
+        NativeOperator javaOperator = OperatorDecisionTable.javaOperator(feelOperatorName, rightOperand.getType(), rightOperand.getType());
         if (javaOperator != null) {
             return javaOperator.getName();
         } else {

@@ -1,9 +1,11 @@
 language: java
-dist: trusty
-jdk: openjdk8
+dist: xenial
+jdk:
+  - openjdk8
+  - openjdk11
 
 before_install:
-  - export MAVEN_OPTS="-Dmaven.repo.local=$HOME/.m2/repository -Xmx2g"
+  - export MAVEN_OPTS="-Dmaven.repo.local=$HOME/.m2/repository -Xmx2g -XX:+UseParallelGC"
 
 install:
   - true
@@ -26,5 +28,6 @@ addons:
 
 script:
   # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
-  - mvn -B -e -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss:SSS -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn clean install sonar:sonar -Dsonar.organization=goldmansachs -Dsonar.projectKey=goldmansachs_jdmn -Psonar-coverage
+  - mvn --version
+  - travis_wait 30 mvn -T 1C -B -e -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss:SSS -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn clean install sonar:sonar -Dsonar.organization=goldmansachs -Dsonar.projectKey=goldmansachs_jdmn -Psonar-coverage
 

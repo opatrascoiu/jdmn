@@ -24,18 +24,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-import static com.gs.dmn.serialization.DMNVersion.DMN_11;
-import static com.gs.dmn.serialization.DMNVersion.DMN_12;
+import static com.gs.dmn.serialization.DMNVersion.*;
 
 public class DMNWriter extends DMNSerializer {
-
     public DMNWriter(BuildLogger logger) {
         super(logger);
     }
 
     public void write(Object definitions, File output, DMNNamespacePrefixMapper namespacePrefixMapper) {
-        try {
-            write(definitions, new FileOutputStream(output), namespacePrefixMapper);
+        try (FileOutputStream fos = new FileOutputStream(output)) {
+            write(definitions, fos, namespacePrefixMapper);
         } catch (Exception e) {
             throw new DMNRuntimeException(String.format("Cannot write DMN to '%s'", output.getPath()), e);
         }
@@ -66,11 +64,15 @@ public class DMNWriter extends DMNSerializer {
     private void write(Marshaller marshaller, Object definitions, OutputStream output) throws JAXBException {
         if (definitions instanceof org.omg.spec.dmn._20151101.model.TDefinitions) {
             QName qName = new QName(DMN_11.getNamespace(), "definitions");
-            JAXBElement<org.omg.spec.dmn._20151101.model.TDefinitions> root = new JAXBElement<org.omg.spec.dmn._20151101.model.TDefinitions>(qName, org.omg.spec.dmn._20151101.model.TDefinitions.class, (org.omg.spec.dmn._20151101.model.TDefinitions) definitions);
+            JAXBElement<org.omg.spec.dmn._20151101.model.TDefinitions> root = new JAXBElement<>(qName, org.omg.spec.dmn._20151101.model.TDefinitions.class, (org.omg.spec.dmn._20151101.model.TDefinitions) definitions);
             marshaller.marshal(root, output);
         } else if (definitions instanceof org.omg.spec.dmn._20180521.model.TDefinitions) {
             QName qName = new QName(DMN_12.getNamespace(), "definitions");
-            JAXBElement<org.omg.spec.dmn._20180521.model.TDefinitions> root = new JAXBElement<org.omg.spec.dmn._20180521.model.TDefinitions>(qName, org.omg.spec.dmn._20180521.model.TDefinitions.class, (org.omg.spec.dmn._20180521.model.TDefinitions) definitions);
+            JAXBElement<org.omg.spec.dmn._20180521.model.TDefinitions> root = new JAXBElement<>(qName, org.omg.spec.dmn._20180521.model.TDefinitions.class, (org.omg.spec.dmn._20180521.model.TDefinitions) definitions);
+            marshaller.marshal(root, output);
+        } else if (definitions instanceof org.omg.spec.dmn._20191111.model.TDefinitions) {
+            QName qName = new QName(DMN_13.getNamespace(), "definitions");
+            JAXBElement<org.omg.spec.dmn._20191111.model.TDefinitions> root = new JAXBElement<>(qName, org.omg.spec.dmn._20191111.model.TDefinitions.class, (org.omg.spec.dmn._20191111.model.TDefinitions) definitions);
             marshaller.marshal(root, output);
         } else {
             throw new DMNRuntimeException(String.format("'%s' is not supported", definitions.getClass()));

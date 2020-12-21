@@ -17,14 +17,6 @@ import com.gs.dmn.runtime.LambdaExpression;
 import java.util.List;
 
 public interface StandardFEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends FEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> {
-    default void logError(String message) {
-        LOGGER.error(message);
-    }
-
-    default void logError(String message, Throwable e) {
-        LOGGER.error(message, e);
-    }
-
     //
     // Conversion functions
     //
@@ -42,7 +34,7 @@ public interface StandardFEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extend
     DATE date(NUMBER year, NUMBER month, NUMBER day);
 
     @Override
-    DATE date(DATE_TIME from);
+    DATE date(DATE from);
 
     @Override
     TIME time(String from);
@@ -51,7 +43,7 @@ public interface StandardFEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extend
     TIME time(NUMBER hour, NUMBER minute, NUMBER second, DURATION offset);
 
     @Override
-    TIME time(DATE_TIME time);
+    TIME time(TIME time);
 
     @Override
     DATE_TIME dateAndTime(String from);
@@ -62,7 +54,7 @@ public interface StandardFEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extend
     @Override
     DURATION duration(String literal);
 
-    DURATION yearsAndMonthsDuration(DATE_TIME from, DATE_TIME to);
+    DURATION yearsAndMonthsDuration(DATE from, DATE to);
 
     //
     // Numeric functions

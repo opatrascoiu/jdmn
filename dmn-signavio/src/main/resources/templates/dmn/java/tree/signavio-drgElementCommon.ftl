@@ -84,7 +84,7 @@
             } else {
                 <@applySubDecisionsIndent "    " drgElement/>
                 // Iterate and aggregate
-                ${transformer.drgElementOutputType(drgElement)} output_ = evaluate(${transformer.drgElementArgumentsExtraCache(transformer.drgElementEvaluateArgumentList(drgElement))});
+                ${transformer.drgElementOutputType(drgElement)} output_ = evaluate(${transformer.drgElementEvaluateArgumentList(drgElement)});
                 cache_.bind("${modelRepository.name(drgElement)}", output_);
 
                 <@endDRGElementAndReturnIndent "    " drgElement "output_" />
@@ -92,39 +92,39 @@
         <#else>
             <@applySubDecisions drgElement/>
             // Iterate and aggregate
-            ${transformer.drgElementOutputType(drgElement)} output_ = evaluate(${transformer.drgElementArgumentsExtraCache(transformer.drgElementEvaluateArgumentList(drgElement))});
+            ${transformer.drgElementOutputType(drgElement)} output_ = evaluate(${transformer.drgElementEvaluateArgumentList(drgElement)});
 
             <@endDRGElementAndReturn drgElement "output_" />
         </#if>
 </#macro>
 
 <#macro addEvaluateIterationMethod drgElement>
-    protected ${transformer.drgElementOutputType(drgElement)} evaluate(${transformer.drgElementSignatureExtraCache(transformer.drgElementEvaluateSignature(drgElement))}) {
+    protected ${transformer.drgElementOutputType(drgElement)} evaluate(${transformer.drgElementEvaluateSignature(drgElement)}) {
         <#assign multiInstanceDecision = transformer.multiInstanceDecisionLogic(drgElement)/>
         <#assign iterationExpression = multiInstanceDecision.iterationExpression/>
         <#assign iterator = multiInstanceDecision.iterator/>
         <#assign aggregator = multiInstanceDecision.aggregator/>
         <#assign topLevelDecision = multiInstanceDecision.topLevelDecision/>
-        <#assign sourceList = transformer.iterationExpressionToJava(drgElement, iterationExpression) />
-        <#assign lambdaParamName = transformer.inputDataVariableName(iterator) />
-        <#assign lambdaBody = "${transformer.drgElementVariableName(topLevelDecision)}.apply(${transformer.drgElementArgumentsExtraCache(transformer.drgElementArgumentsExtra(transformer.drgElementConvertedArgumentList(topLevelDecision)))})" />
-        ${transformer.qualifiedName(javaPackageName, transformer.drgElementClassName(topLevelDecision))} ${transformer.drgElementVariableName(topLevelDecision)} = new ${transformer.qualifiedName(javaPackageName, transformer.drgElementClassName(topLevelDecision))}();
+        <#assign sourceList = transformer.iterationExpressionToNative(drgElement, iterationExpression) />
+        <#assign lambdaParamName = transformer.namedElementVariableName(iterator) />
+        <#assign lambdaBody = "${transformer.namedElementVariableName(topLevelDecision)}.apply(${transformer.drgElementArgumentListExtraCacheWithConvertedArgumentList(topLevelDecision)})" />
+        ${transformer.qualifiedName(javaPackageName, transformer.drgElementClassName(topLevelDecision))} ${transformer.namedElementVariableName(topLevelDecision)} = new ${transformer.qualifiedName(javaPackageName, transformer.drgElementClassName(topLevelDecision))}();
         <#if aggregator == "COLLECT">
-        return ${sourceList}.stream().map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList());
+        return ${sourceList}.${transformer.getStream()}.map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList());
         <#elseif aggregator == "SUM">
-        return sum(${sourceList}.stream().map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
+        return sum(${sourceList}.${transformer.getStream()}.map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
         <#elseif aggregator == "MIN">
-        return = min(${sourceList}.stream().map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
+        return = min(${sourceList}.${transformer.getStream()}.map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
         <#elseif aggregator == "MAX">
-        return max(${sourceList}.stream().map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
+        return max(${sourceList}.${transformer.getStream()}.map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
         <#elseif aggregator == "COUNT">
-        return count(${sourceList}.stream().map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
+        return count(${sourceList}.${transformer.getStream()}.map(${lambdaParamName} -> ${lambdaBody}).collect(Collectors.toList()));
         <#elseif aggregator == "ALLTRUE">
-        return ${sourceList}.stream().allMatch(${lambdaParamName} -> ${lambdaBody});
+        return ${sourceList}.${transformer.getStream()}.allMatch(${lambdaParamName} -> ${lambdaBody});
         <#elseif aggregator == "ANYTRUE">
-        return ${sourceList}.stream().anyMatch(${lambdaParamName} -> ${lambdaBody});
+        return ${sourceList}.${transformer.getStream()}.anyMatch(${lambdaParamName} -> ${lambdaBody});
         <#elseif aggregator == "ALLFALSE">
-        return ${sourceList}.stream().allMatch(${lambdaParamName} -> !${lambdaBody});
+        return ${sourceList}.${transformer.getStream()}.allMatch(${lambdaParamName} -> !${lambdaBody});
         <#else>
         logError("${aggregator} is not implemented yet");
         return null;
@@ -136,8 +136,8 @@
     BKM linked to Decision
 -->
 <#macro addEvaluateBKMLinkedToDecisionMethod drgElement>
-    protected ${transformer.drgElementOutputType(drgElement)} evaluate(${transformer.drgElementSignatureExtra(transformer.drgElementSignature(drgElement))}) {
-        return ${transformer.bkmLinkedToDecisionToJava(drgElement)};
+    protected ${transformer.drgElementOutputType(drgElement)} evaluate(${transformer.drgElementEvaluateSignature(drgElement)}) {
+        return ${transformer.bkmLinkedToDecisionToNative(drgElement)};
     }
 </#macro>
 
@@ -158,8 +158,9 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
 -->
 <#macro addSubDecisionFields drgElement>
     <#list modelRepository.directSubDecisions(drgElement)>
+
         <#items as subDecision>
-    private final ${transformer.qualifiedName(subDecision)} ${transformer.drgElementVariableName(subDecision)};
+    private final ${transformer.qualifiedName(subDecision)} ${transformer.drgElementReferenceVariableName(subDecision)};
         </#items>
     </#list>
 </#macro>
@@ -167,7 +168,7 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
 <#macro setSubDecisionFields drgElement>
     <#list modelRepository.directSubDecisions(drgElement)>
         <#items as subDecision>
-        this.${transformer.drgElementVariableName(subDecision)} = ${transformer.drgElementVariableName(subDecision)};
+        this.${transformer.drgElementReferenceVariableName(subDecision)} = ${transformer.drgElementReferenceVariableName(subDecision)};
         </#items>
     </#list>
 </#macro>
@@ -202,7 +203,7 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
             output_ = ${transformer.defaultValue(drgElement)};
             <#if !modelRepository.hasAggregator(expression)>
             if (output_ == null) {
-                output_ = this.asList();
+                output_ = ${transformer.asEmptyList(drgElement)};
             }
             </#if>
         } else {
@@ -250,7 +251,7 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
             // Compute output
             output_.setMatched(true);
             <#list expression.output as output>
-            output_.${transformer.setter(drgElement, output)}(${transformer.outputEntryToJava(drgElement, rule.outputEntry[output_index], output_index)});
+            output_.${transformer.setter(drgElement, output)}(${transformer.outputEntryToNative(drgElement, rule.outputEntry[output_index], output_index)});
                 <#if modelRepository.isOutputOrderHit(expression.hitPolicy) && transformer.priority(drgElement, rule.outputEntry[output_index], output_index)?exists>
             output_.${transformer.prioritySetter(drgElement, output)}(${transformer.priority(drgElement, rule.outputEntry[output_index], output_index)});
                 </#if>
@@ -276,18 +277,18 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
         <#items as rule>
         <#if modelRepository.isFirstSingleHit(expression.hitPolicy) && modelRepository.atLeastTwoRules(expression)>
         <#if rule?is_first>
-        ${transformer.abstractRuleOutputClassName()} tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentsExtra(transformer.ruleArgumentList(drgElement))});
+        ${transformer.abstractRuleOutputClassName()} tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentListExtra(transformer.ruleArgumentList(drgElement))});
         ruleOutputList_.add(tempRuleOutput_);
         boolean matched_ = tempRuleOutput_.isMatched();
         <#else >
         if (!matched_) {
-            tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentsExtra(transformer.ruleArgumentList(drgElement))});
+            tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentListExtra(transformer.ruleArgumentList(drgElement))});
             ruleOutputList_.add(tempRuleOutput_);
             matched_ = tempRuleOutput_.isMatched();
         }
         </#if>
         <#else >
-        ruleOutputList_.add(rule${rule_index}(${transformer.drgElementArgumentsExtra(transformer.ruleArgumentList(drgElement))}));
+        ruleOutputList_.add(rule${rule_index}(${transformer.drgElementArgumentListExtra(transformer.ruleArgumentList(drgElement))}));
         </#if>
         </#items>
     </#list>
@@ -296,7 +297,7 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
 <#macro addConversionMethod drgElement>
     <#if modelRepository.isCompoundDecisionTable(drgElement)>
     public ${transformer.drgElementOutputClassName(drgElement)} toDecisionOutput(${transformer.ruleOutputClassName(drgElement)} ruleOutput_) {
-        <#assign simpleClassName = transformer.itemDefinitionJavaClassName(transformer.drgElementOutputClassName(drgElement))>
+        <#assign simpleClassName = transformer.itemDefinitionNativeClassName(transformer.drgElementOutputClassName(drgElement))>
         ${simpleClassName} result_ = ${transformer.defaultConstructor(simpleClassName)};
         <#assign expression = modelRepository.expression(drgElement)>
         <#list expression.output as output>
@@ -337,9 +338,9 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
 <#macro addEvaluateExpressionMethod drgElement>
     protected ${transformer.drgElementOutputType(drgElement)} evaluate(${transformer.drgElementEvaluateSignature(drgElement)}) {
     <#if modelRepository.isFreeTextLiteralExpression(drgElement)>
-        return ${transformer.freeTextLiteralExpressionToJava(drgElement)};
+        return ${transformer.freeTextLiteralExpressionToNative(drgElement)};
     <#else>
-        <#assign stm = transformer.expressionToJava(drgElement)>
+        <#assign stm = transformer.expressionToNative(drgElement)>
         <#if transformer.isCompoundStatement(stm)>
             <#list stm.statements as child>
         ${child.expression}
@@ -363,9 +364,9 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
             ${extraIndent}// Apply child decisions
         <#items as subDecision>
             <#if transformer.isLazyEvaluated(subDecision)>
-            ${extraIndent}${transformer.lazyEvalClassName()}<${transformer.drgElementOutputType(subDecision)}> ${transformer.drgElementVariableName(subDecision)} = new ${transformer.lazyEvalClassName()}<>(() -> this.${transformer.drgElementVariableName(subDecision)}.apply(${transformer.drgElementArgumentsExtraCache(transformer.drgElementArgumentsExtra(transformer.drgElementArgumentList(subDecision)))}));
+            ${extraIndent}${transformer.lazyEvalClassName()}<${transformer.drgElementOutputType(subDecision)}> ${transformer.drgElementReferenceVariableName(subDecision)} = new ${transformer.lazyEvalClassName()}<>(() -> this.${transformer.drgElementReferenceVariableName(subDecision)}.apply(${transformer.drgElementArgumentListExtraCache(subDecision)}));
             <#else>
-            ${extraIndent}${transformer.drgElementOutputType(subDecision)} ${transformer.drgElementVariableName(subDecision)} = this.${transformer.drgElementVariableName(subDecision)}.apply(${transformer.drgElementArgumentsExtraCache(transformer.drgElementArgumentsExtra(transformer.drgElementArgumentList(subDecision)))});
+            ${extraIndent}${transformer.drgElementOutputType(subDecision)} ${transformer.drgElementReferenceVariableName(subDecision)} = this.${transformer.drgElementReferenceVariableName(subDecision)}.apply(${transformer.drgElementArgumentListExtraCache(subDecision)});
             </#if>
         </#items>
 
@@ -377,14 +378,15 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
 -->
 <#macro startDRGElement drgElement>
             // ${transformer.startElementCommentText(drgElement)}
-            long ${transformer.drgElementVariableName(drgElement)}StartTime_ = System.currentTimeMillis();
-            ${transformer.argumentsClassName()} ${transformer.drgElementVariableName(drgElement)}Arguments_ = new ${transformer.argumentsClassName()}();
+            long ${transformer.namedElementVariableName(drgElement)}StartTime_ = System.currentTimeMillis();
+            ${transformer.argumentsClassName()} ${transformer.argumentsVariableName(drgElement)} = ${transformer.defaultConstructor(transformer.argumentsClassName())};
+            <#assign elementNames = transformer.drgElementArgumentDisplayNameList(drgElement)/>
             <#list transformer.drgElementArgumentNameList(drgElement)>
             <#items as arg>
-            ${transformer.drgElementVariableName(drgElement)}Arguments_.put("${arg}", ${arg});
+            ${transformer.argumentsVariableName(drgElement)}.put("${transformer.escapeInString(elementNames[arg?index])}", ${arg});
             </#items>
             </#list>
-            ${transformer.eventListenerVariableName()}.startDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.drgElementVariableName(drgElement)}Arguments_);
+            ${transformer.eventListenerVariableName()}.startDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.argumentsVariableName(drgElement)});
 </#macro>
 
 <#macro endDRGElement drgElement output>
@@ -393,7 +395,7 @@ import static ${transformer.qualifiedName(subBKM)}.${transformer.bkmFunctionName
 
 <#macro endDRGElementIndent extraIndent drgElement output>
             ${extraIndent}// ${transformer.endElementCommentText(drgElement)}
-            ${extraIndent}${transformer.eventListenerVariableName()}.endDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.drgElementVariableName(drgElement)}Arguments_, ${output}, (System.currentTimeMillis() - ${transformer.drgElementVariableName(drgElement)}StartTime_));
+            ${extraIndent}${transformer.eventListenerVariableName()}.endDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.argumentsVariableName(drgElement)}, ${output}, (System.currentTimeMillis() - ${transformer.namedElementVariableName(drgElement)}StartTime_));
 </#macro>
 
 <#macro endDRGElementAndReturn drgElement output>

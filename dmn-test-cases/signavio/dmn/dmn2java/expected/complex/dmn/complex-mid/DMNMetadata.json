@@ -1,0 +1,361 @@
+{
+  "dmnVersion" : "1.1",
+  "modelVersion" : "2.0",
+  "platformVersion" : "1.0",
+  "dmnNamespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml",
+  "nativeNamespace" : "",
+  "types" : [ {
+    "@kind" : "referenceType",
+    "allowedValues" : null,
+    "id" : "id-106c441cd62367c88758962cff427424",
+    "isCollection" : true,
+    "label" : "Big mid",
+    "name" : "bigMid",
+    "typeRef" : {
+      "localName" : "boolean",
+      "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+    }
+  }, {
+    "@kind" : "referenceType",
+    "allowedValues" : "\"Accept\",\"Warn\",\"Reject\"",
+    "id" : "id-306ccf7d369d2bba5c4423e805066cad",
+    "isCollection" : false,
+    "label" : "decide",
+    "name" : "decide",
+    "typeRef" : {
+      "localName" : "string",
+      "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+    }
+  }, {
+    "@kind" : "referenceType",
+    "allowedValues" : "\"Consider\",\"Don't Consider\"",
+    "id" : "id-2eb6c4f478feb0cd7d3d6a8322f6b13c",
+    "isCollection" : false,
+    "label" : "decision",
+    "name" : "decision",
+    "typeRef" : {
+      "localName" : "string",
+      "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+    }
+  }, {
+    "@kind" : "referenceType",
+    "allowedValues" : "\"Accept\",\"Warn\",\"Reject\"",
+    "id" : "id-c1b623d28c7f2f9ecef3a5864ba995a0",
+    "isCollection" : true,
+    "label" : "small mid",
+    "name" : "smallMid",
+    "typeRef" : {
+      "localName" : "string",
+      "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+    }
+  }, {
+    "@kind" : "compositeType",
+    "id" : "id-509d57e00a823edb6857ed145d1f0b4b",
+    "isCollection" : false,
+    "label" : "TestPeopleType",
+    "name" : "testPeopleType",
+    "types" : [ {
+      "@kind" : "referenceType",
+      "allowedValues" : null,
+      "id" : "id-509d57e00a823edb6857ed145d1f0b4b-relation-0",
+      "isCollection" : true,
+      "label" : "TestPersonType",
+      "name" : "testPersonType",
+      "typeRef" : {
+        "localName" : "testPersonType",
+        "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+      }
+    } ]
+  }, {
+    "@kind" : "referenceType",
+    "allowedValues" : "\"Happy\",\"Sad\",\"Tall\",\"Short\",\"Loud\",\"Quiet\"",
+    "id" : "id-9a9e53ad8c13f4bd055babfca1d4e21c",
+    "isCollection" : false,
+    "label" : "TestPersonProperties",
+    "name" : "testPersonProperties",
+    "typeRef" : {
+      "localName" : "string",
+      "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+    }
+  }, {
+    "@kind" : "compositeType",
+    "id" : "id-9187b71a2091ed5d0030ddaaf4b0b07d",
+    "isCollection" : false,
+    "label" : "TestPersonType",
+    "name" : "testPersonType",
+    "types" : [ {
+      "@kind" : "referenceType",
+      "allowedValues" : null,
+      "id" : "id-9187b71a2091ed5d0030ddaaf4b0b07d-relation-1",
+      "isCollection" : false,
+      "label" : "Age",
+      "name" : "age",
+      "typeRef" : {
+        "localName" : "number",
+        "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+      }
+    }, {
+      "@kind" : "referenceType",
+      "allowedValues" : null,
+      "id" : "id-9187b71a2091ed5d0030ddaaf4b0b07d-relation-0",
+      "isCollection" : false,
+      "label" : "Name",
+      "name" : "name",
+      "typeRef" : {
+        "localName" : "string",
+        "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+      }
+    }, {
+      "@kind" : "referenceType",
+      "allowedValues" : null,
+      "id" : "id-9187b71a2091ed5d0030ddaaf4b0b07d-relation-2",
+      "isCollection" : true,
+      "label" : "Properties",
+      "name" : "properties",
+      "typeRef" : {
+        "localName" : "testPersonProperties",
+        "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+      }
+    } ]
+  }, {
+    "@kind" : "referenceType",
+    "allowedValues" : null,
+    "id" : "id-9da1e1e3140d3a13da9fbd3b77d85666",
+    "isCollection" : false,
+    "label" : "top decision",
+    "name" : "topDecision",
+    "typeRef" : {
+      "localName" : "boolean",
+      "namespace" : "http://www.omg.org/spec/FEEL/20140401"
+    }
+  } ],
+  "elements" : [ {
+    "@kind" : "inputData",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "id" : "id-66be7cc5d14947682f8a060a30da5fa0",
+    "javaParameterName" : "properties_iterator",
+    "javaTypeName" : "String",
+    "label" : "Properties",
+    "name" : "properties_iterator",
+    "shapeId" : "sid-BBF80264-5235-438F-8233-8ADCD4E8E1C3",
+    "typeRef" : {
+      "localName" : "testPersonProperties",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  }, {
+    "@kind" : "inputData",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "id" : "id-76acfc10261ddc2fe0ac3081483133ad",
+    "javaParameterName" : "testPeopleType",
+    "javaTypeName" : "type.TestPeopleType",
+    "label" : "TestPeopleType",
+    "name" : "testPeopleType",
+    "shapeId" : "sid-1F9E0628-0D5B-46B9-8E5E-90B3BC8255E8",
+    "typeRef" : {
+      "localName" : "testPeopleType",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  }, {
+    "@kind" : "inputData",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "id" : "id-e801f20a6a898682c3b5e22db82de47b",
+    "javaParameterName" : "testPersonType6_iterator",
+    "javaTypeName" : "type.TestPersonType",
+    "label" : "TestPersonType",
+    "name" : "testPersonType6_iterator",
+    "shapeId" : "sid-B1629015-BFF6-45BB-A86E-65573FA58D92",
+    "typeRef" : {
+      "localName" : "testPersonType",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  }, {
+    "@kind" : "decision",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "extensions" : [ {
+      "@kind" : "multiInstanceDecisionLogic",
+      "aggregationFunction" : "COLLECT",
+      "iterationExpression" : "testPeopleType.testPersonType",
+      "iteratorShapeId" : "id-e801f20a6a898682c3b5e22db82de47b",
+      "topLevelDecisionId" : "id-b4717b9aa316e3d6266365a4ae6cf873"
+    } ],
+    "id" : "id-519b91fe7a0fd84ede349e72ff1344e8",
+    "informationReferences" : [ {
+      "reference" : "id-76acfc10261ddc2fe0ac3081483133ad"
+    } ],
+    "javaOutputTypeName" : "List<Boolean>",
+    "javaParameterName" : "bigMid",
+    "javaTypeName" : "BigMid",
+    "knowledgeReferences" : [ ],
+    "label" : "Big mid",
+    "name" : "bigMid",
+    "protoRequestName" : "proto.BigMidRequest",
+    "protoResponseName" : "proto.BigMidResponse",
+    "shapeId" : "sid-074482BF-264A-48BD-976A-707710B53881",
+    "transitiveRequiredInput" : [ {
+      "@kind" : "inputData",
+      "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+      "id" : "id-76acfc10261ddc2fe0ac3081483133ad",
+      "javaParameterName" : "testPeopleType",
+      "javaTypeName" : "type.TestPeopleType",
+      "label" : "TestPeopleType",
+      "name" : "testPeopleType",
+      "shapeId" : "sid-1F9E0628-0D5B-46B9-8E5E-90B3BC8255E8",
+      "typeRef" : {
+        "localName" : "testPeopleType",
+        "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+      }
+    } ],
+    "typeRef" : {
+      "localName" : "bigMid",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  }, {
+    "@kind" : "decision",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "extensions" : [ ],
+    "id" : "id-54e777f1b3e48362bf9e79c6d305e91d",
+    "informationReferences" : [ {
+      "reference" : "id-66be7cc5d14947682f8a060a30da5fa0"
+    } ],
+    "javaOutputTypeName" : "String",
+    "javaParameterName" : "decide",
+    "javaTypeName" : "Decide",
+    "knowledgeReferences" : [ ],
+    "label" : "decide",
+    "name" : "decide",
+    "protoRequestName" : "proto.DecideRequest",
+    "protoResponseName" : "proto.DecideResponse",
+    "shapeId" : "sid-FF023BBF-7D02-4ADE-AACE-AD23A3197B21",
+    "transitiveRequiredInput" : [ {
+      "@kind" : "inputData",
+      "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+      "id" : "id-66be7cc5d14947682f8a060a30da5fa0",
+      "javaParameterName" : "properties_iterator",
+      "javaTypeName" : "String",
+      "label" : "Properties",
+      "name" : "properties_iterator",
+      "shapeId" : "sid-BBF80264-5235-438F-8233-8ADCD4E8E1C3",
+      "typeRef" : {
+        "localName" : "testPersonProperties",
+        "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+      }
+    } ],
+    "typeRef" : {
+      "localName" : "decide",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  }, {
+    "@kind" : "decision",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "extensions" : [ ],
+    "id" : "id-db8a303073ca6775c192503c81230235",
+    "informationReferences" : [ {
+      "reference" : "id-e801f20a6a898682c3b5e22db82de47b"
+    } ],
+    "javaOutputTypeName" : "String",
+    "javaParameterName" : "decision",
+    "javaTypeName" : "Decision",
+    "knowledgeReferences" : [ ],
+    "label" : "decision",
+    "name" : "decision",
+    "protoRequestName" : "proto.DecisionRequest",
+    "protoResponseName" : "proto.DecisionResponse",
+    "shapeId" : "sid-0316D03A-BE86-4BED-BB39-0DAF237F743D",
+    "transitiveRequiredInput" : [ {
+      "@kind" : "inputData",
+      "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+      "id" : "id-e801f20a6a898682c3b5e22db82de47b",
+      "javaParameterName" : "testPersonType6_iterator",
+      "javaTypeName" : "type.TestPersonType",
+      "label" : "TestPersonType",
+      "name" : "testPersonType6_iterator",
+      "shapeId" : "sid-B1629015-BFF6-45BB-A86E-65573FA58D92",
+      "typeRef" : {
+        "localName" : "testPersonType",
+        "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+      }
+    } ],
+    "typeRef" : {
+      "localName" : "decision",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  }, {
+    "@kind" : "decision",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "extensions" : [ {
+      "@kind" : "multiInstanceDecisionLogic",
+      "aggregationFunction" : "COLLECT",
+      "iterationExpression" : "testPersonType6_iterator.properties",
+      "iteratorShapeId" : "id-66be7cc5d14947682f8a060a30da5fa0",
+      "topLevelDecisionId" : "id-54e777f1b3e48362bf9e79c6d305e91d"
+    } ],
+    "id" : "id-dfce3b29b4d620c67860613f0681a5c0",
+    "informationReferences" : [ {
+      "reference" : "id-e801f20a6a898682c3b5e22db82de47b"
+    } ],
+    "javaOutputTypeName" : "List<String>",
+    "javaParameterName" : "smallMid",
+    "javaTypeName" : "SmallMid",
+    "knowledgeReferences" : [ ],
+    "label" : "small mid",
+    "name" : "smallMid",
+    "protoRequestName" : "proto.SmallMidRequest",
+    "protoResponseName" : "proto.SmallMidResponse",
+    "shapeId" : "sid-882369ED-7C1E-4966-9D43-FA127486ABB8",
+    "transitiveRequiredInput" : [ {
+      "@kind" : "inputData",
+      "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+      "id" : "id-e801f20a6a898682c3b5e22db82de47b",
+      "javaParameterName" : "testPersonType6_iterator",
+      "javaTypeName" : "type.TestPersonType",
+      "label" : "TestPersonType",
+      "name" : "testPersonType6_iterator",
+      "shapeId" : "sid-B1629015-BFF6-45BB-A86E-65573FA58D92",
+      "typeRef" : {
+        "localName" : "testPersonType",
+        "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+      }
+    } ],
+    "typeRef" : {
+      "localName" : "smallMid",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  }, {
+    "@kind" : "decision",
+    "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+    "extensions" : [ ],
+    "id" : "id-b4717b9aa316e3d6266365a4ae6cf873",
+    "informationReferences" : [ {
+      "reference" : "id-db8a303073ca6775c192503c81230235"
+    }, {
+      "reference" : "id-dfce3b29b4d620c67860613f0681a5c0"
+    } ],
+    "javaOutputTypeName" : "Boolean",
+    "javaParameterName" : "topDecision",
+    "javaTypeName" : "TopDecision",
+    "knowledgeReferences" : [ ],
+    "label" : "top decision",
+    "name" : "topDecision",
+    "protoRequestName" : "proto.TopDecisionRequest",
+    "protoResponseName" : "proto.TopDecisionResponse",
+    "shapeId" : "sid-4B2EDB65-9657-4445-9CBE-2A41C6E8ECE1",
+    "transitiveRequiredInput" : [ {
+      "@kind" : "inputData",
+      "diagramId" : "3652588c6383423c9774f4dfd4393cb1",
+      "id" : "id-e801f20a6a898682c3b5e22db82de47b",
+      "javaParameterName" : "testPersonType6_iterator",
+      "javaTypeName" : "type.TestPersonType",
+      "label" : "TestPersonType",
+      "name" : "testPersonType6_iterator",
+      "shapeId" : "sid-B1629015-BFF6-45BB-A86E-65573FA58D92",
+      "typeRef" : {
+        "localName" : "testPersonType",
+        "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+      }
+    } ],
+    "typeRef" : {
+      "localName" : "topDecision",
+      "namespace" : "http://www.provider.com/dmn/1.1/diagram/3652588c6383423c9774f4dfd4393cb1.xml"
+    }
+  } ]
+}

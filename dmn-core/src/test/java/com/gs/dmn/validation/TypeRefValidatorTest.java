@@ -18,25 +18,28 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertTrue;
+
 public class TypeRefValidatorTest extends AbstractValidatorTest {
     private final TypeRefValidator validator = new TypeRefValidator();
 
     @Test
     public void testValidateWhenCorrect() {
         List<String> expectedErrors = Arrays.asList();
-        validate(validator, "tck/cl3/input/0020-vacation-days.dmn", expectedErrors);
+        validate(validator, tckResource("tck/1.2/cl3/0020-vacation-days/0020-vacation-days.dmn"), expectedErrors);
     }
 
     @Test
     public void validate() {
         List<String> expectedErrors = Arrays.asList(
-           "Cannot find type 'QualifiedName(null, applicant)' for DRGElement 'applicant'"
+                "(model='test-dmn', label='Applicant', name='applicant', id='id-d2376567fde3c9400ee327ecec21e36d'): error: Cannot find typeRef 'QualifiedName(null, applicant)'"
         );
-        validate(validator, "dmn/input/test-dmn-with-missing-type-ref.dmn", expectedErrors);
+        validate(validator, resource("dmn/input/1.1/test-dmn-with-missing-type-ref.dmn"), expectedErrors);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidateDefinitionsWhenNull() {
-        validator.validate(null);
+        List<String> actualErrors = validator.validate(null);
+        assertTrue(actualErrors.isEmpty());
     }
 }

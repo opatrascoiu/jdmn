@@ -1,3 +1,15 @@
+<#--
+    Copyright 2016 Goldman Sachs.
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+
+    You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations under the License.
+-->
 <#if javaPackageName?has_content>
 package ${javaPackageName};
 </#if>
@@ -22,27 +34,63 @@ public interface ${javaClassName} extends ${transformer.dmnTypeClassName()} {
         } else if (${javaClassName}.class.isAssignableFrom(other.getClass())) {
             return (${javaClassName})other;
         } else if (other instanceof ${transformer.contextClassName()}) {
-            ${transformer.itemDefinitionJavaClassName(javaClassName)} result_ = new ${transformer.itemDefinitionJavaClassName(javaClassName)}();
+            ${transformer.itemDefinitionNativeClassName(javaClassName)} result_ = new ${transformer.itemDefinitionNativeClassName(javaClassName)}();
         <#list itemDefinition.itemComponent as child>
             <#if modelRepository.label(child)?has_content>
-            result_.${transformer.setter(child)}((${transformer.itemDefinitionJavaQualifiedInterfaceName(child)})((${transformer.contextClassName()})other).get("${modelRepository.name(child)}", "${modelRepository.label(child)}"));
+            result_.${transformer.setter(child)}((${transformer.itemDefinitionNativeQualifiedInterfaceName(child)})((${transformer.contextClassName()})other).get("${modelRepository.name(child)}", "${modelRepository.label(child)}"));
             <#else>
-            result_.${transformer.setter(child)}((${transformer.itemDefinitionJavaQualifiedInterfaceName(child)})((${transformer.contextClassName()})other).get("${modelRepository.name(child)}"));
+            result_.${transformer.setter(child)}((${transformer.itemDefinitionNativeQualifiedInterfaceName(child)})((${transformer.contextClassName()})other).get("${modelRepository.name(child)}"));
             </#if>
         </#list>
             return result_;
         } else if (other instanceof ${transformer.dmnTypeClassName()}) {
             return ${transformer.convertMethodName(itemDefinition)}(((${transformer.dmnTypeClassName()})other).toContext());
+    <#if transformer.isGenerateProto()>
+        } else if (other instanceof ${transformer.qualifiedProtoMessageName(itemDefinition)}) {
+            ${transformer.itemDefinitionNativeClassName(javaClassName)} result_ = ${transformer.defaultConstructor(transformer.itemDefinitionNativeClassName(javaClassName))};
+        <#list itemDefinition.itemComponent as child>
+            result_.${transformer.setter(child)}(${transformer.convertProtoMember("other", itemDefinition, child, true)});
+        </#list>
+            return result_;
+    </#if>
         } else {
             throw new ${transformer.dmnRuntimeExceptionClassName()}(String.format("Cannot convert '%s' to '%s'", other.getClass().getSimpleName(), ${javaClassName}.class.getSimpleName()));
         }
     }
+    <#if transformer.isGenerateProto()>
+
+    static ${transformer.qualifiedProtoMessageName(itemDefinition)} toProto(${javaClassName} other) {
+        ${transformer.qualifiedProtoMessageName(itemDefinition)}.Builder result_ = ${transformer.qualifiedProtoMessageName(itemDefinition)}.newBuilder();
+        if (other != null) {
+        <#list itemDefinition.itemComponent as child>
+            <#assign memberVariable = transformer.namedElementVariableNameProto(child) />
+            ${transformer.qualifiedNativeProtoType(child)} ${memberVariable} = ${transformer.convertMemberToProto("other", javaClassName, child, true)};
+            <#if transformer.isProtoReference(child)>
+            if (${memberVariable} != null) {
+                result_.${transformer.protoSetter(child)}(${memberVariable});
+            }
+            <#else>
+            result_.${transformer.protoSetter(child)}(${memberVariable});
+            </#if>
+        </#list>
+        }
+        return result_.build();
+    }
+
+    static List<${transformer.qualifiedProtoMessageName(itemDefinition)}> toProto(List<${javaClassName}> other) {
+        if (other == null) {
+            return null;
+        } else {
+            return other.stream().map(o -> toProto(o)).collect(java.util.stream.Collectors.toList());
+        }
+    }
+    </#if>
 </#macro>
 
 <#macro addAccessors itemDefinition>
     <#list itemDefinition.itemComponent as child>
-        <#assign memberName = transformer.itemDefinitionVariableName(child)/>
-        <#assign memberType = transformer.itemDefinitionJavaQualifiedInterfaceName(child)/>
+        <#assign memberName = transformer.namedElementVariableName(child)/>
+        <#assign memberType = transformer.itemDefinitionNativeQualifiedInterfaceName(child)/>
     @com.fasterxml.jackson.annotation.JsonGetter("${transformer.escapeInString(modelRepository.displayName(child))}")
     ${memberType} ${transformer.getter(child)};
 
@@ -53,7 +101,7 @@ public interface ${javaClassName} extends ${transformer.dmnTypeClassName()} {
     default ${transformer.contextClassName()} toContext() {
         ${transformer.contextClassName()} context = ${transformer.defaultConstructor(transformer.contextClassName())};
         <#list itemDefinition.itemComponent as child>
-            <#assign memberName = transformer.itemDefinitionVariableName(child)/>
+            <#assign memberName = transformer.namedElementVariableName(child)/>
             <#assign member = transformer.getter(child)/>
         context.put("${memberName}", ${member});
         </#list>

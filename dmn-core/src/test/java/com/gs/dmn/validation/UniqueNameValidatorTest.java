@@ -18,26 +18,29 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertTrue;
+
 public class UniqueNameValidatorTest extends AbstractValidatorTest {
     private final UniqueNameValidator validator = new UniqueNameValidator();
 
     @Test
     public void testValidateWhenCorrect() {
-        validate(validator, "tck/cl3/input/0020-vacation-days.dmn", new ArrayList<>());
+        validate(validator, tckResource("tck/1.2/cl3/0020-vacation-days/0020-vacation-days.dmn"), new ArrayList<>());
     }
 
     @Test
     public void testValidateDefinitionsWhenNotUniqueNames() {
         List<String> expectedErrors = Arrays.asList(
-                "The 'name' of a 'DRGElement' must be unique. Found 3 duplicates for 'CIP Assessments'.",
-                "The 'name' of a 'DRGElement' must be unique. Found 2 duplicates for 'Input'.",
-                "The 'name' of a 'ItemDefinition' must be unique. Found 2 duplicates for 'itemDefinition'."
+                "(model='definitions'): error: The 'name' of a 'DRGElement' must be unique. Found 3 duplicates for 'CIP Assessments'.",
+                "(model='definitions'): error: The 'name' of a 'DRGElement' must be unique. Found 2 duplicates for 'Input'.",
+                "(model='definitions'): error: The 'name' of a 'ItemDefinition' must be unique. Found 2 duplicates for 'itemDefinition'."
         );
-        validate(validator, "dmn/input/test-dmn-with-duplicates.dmn", expectedErrors);
+        validate(validator, resource("dmn/input/1.1/test-dmn-with-duplicates.dmn"), expectedErrors);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidateDefinitionsWhenNull() {
-        validator.validate(null);
+        List<String> actualErrors = validator.validate(null);
+        assertTrue(actualErrors.isEmpty());
     }
 }

@@ -16,20 +16,20 @@ import com.gs.dmn.runtime.annotation.DRGElement;
 import com.gs.dmn.runtime.annotation.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
 
 public class DefaultDMNBaseDecisionTest {
     private final DefaultDMNBaseDecision baseDecision = new DefaultDMNBaseDecision();
 
     @Test
     public void testGetDRGElementAnnotation() {
-        DRGElement drgElementAnnotation = baseDecision.getDRGElementAnnotation();
+        DRGElement drgElementAnnotation = this.baseDecision.getDRGElementAnnotation();
         assertNull(drgElementAnnotation);
     }
 
     @Test
     public void testGetRuleAnnotation() {
-        Rule ruleAnnotation = baseDecision.getRuleAnnotation(0);
+        Rule ruleAnnotation = this.baseDecision.getRuleAnnotation(0);
         assertNull(ruleAnnotation);
     }
 

@@ -20,23 +20,24 @@ import com.gs.dmn.runtime.interpreter.ImportPath;
 import com.gs.dmn.serialization.PrefixNamespaceMappings;
 import com.gs.dmn.signavio.extension.MultiInstanceDecisionLogic;
 import com.gs.dmn.signavio.extension.SignavioExtension;
-import org.omg.spec.dmn._20180521.model.*;
+import org.apache.commons.lang3.StringUtils;
+import org.omg.spec.dmn._20191111.model.*;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.gs.dmn.serialization.DMNVersion.DMN_12;
+import static com.gs.dmn.serialization.DMNVersion.LATEST;
 
 public class SignavioDMNModelRepository extends DMNModelRepository {
     private String schemaNamespace = "http://www.signavio.com/schema/dmn/1.1/";
-    private String[] schemaPrefixes = new String[] {
+    private final String[] schemaPrefixes = new String[] {
             "signavio", "sigExt"
     };
 
-    private QName diagramId = new QName(this.schemaNamespace, "diagramId");
-    private QName shapeId = new QName(this.schemaNamespace, "shapeId");
+    private QName diagramIdQName = new QName(this.schemaNamespace, "diagramId");
+    private QName shapeIdQName = new QName(this.schemaNamespace, "shapeId");
 
     public final SignavioExtension extension = new SignavioExtension(this);
 
@@ -57,15 +58,15 @@ public class SignavioDMNModelRepository extends DMNModelRepository {
     public SignavioDMNModelRepository(Pair<TDefinitions, PrefixNamespaceMappings> pair, String schemaNamespace) {
         this(pair);
         this.schemaNamespace = schemaNamespace;
-        this.diagramId = new QName(schemaNamespace, "diagramId");
-        this.shapeId = new QName(schemaNamespace, "shapeId");
+        this.diagramIdQName = new QName(schemaNamespace, "diagramId");
+        this.shapeIdQName = new QName(schemaNamespace, "shapeId");
     }
 
     public SignavioDMNModelRepository(List<Pair<TDefinitions, PrefixNamespaceMappings>> pairs) {
         super(pairs);
         for (Pair<TDefinitions, PrefixNamespaceMappings> pair: pairs) {
             TDefinitions definitions = pair.getLeft();
-            List<Object> elementList = this.extension.findExtensions(definitions.getExtensionElements(), DMN_12.getNamespace(), "decisionService");
+            List<Object> elementList = this.extension.findExtensions(definitions.getExtensionElements(), LATEST.getNamespace(), "decisionService");
             for(Object element: elementList) {
                 Object value = ((JAXBElement<?>) element).getValue();
                 if (value instanceof TDecisionService) {
@@ -76,7 +77,20 @@ public class SignavioDMNModelRepository extends DMNModelRepository {
     }
 
     @Override
-    public SignavioDMNModelRepository clone() {
+    protected void addModelCoordinates(TDefinitions definitions, TDMNElement element, List<String> locationParts) {
+        String diagramId = getDiagramId(element);
+        if (!StringUtils.isBlank(diagramId)) {
+            locationParts.add(String.format("model='%s'", diagramId));
+        } else {
+            String modelName = definitions.getName();
+            if (!StringUtils.isBlank(modelName)) {
+                locationParts.add(String.format("model='%s'", modelName));
+            }
+        }
+    }
+
+    @Override
+    public SignavioDMNModelRepository copy() {
         return new SignavioDMNModelRepository(this.pairList);
     }
 
@@ -88,12 +102,22 @@ public class SignavioDMNModelRepository extends DMNModelRepository {
         return this.schemaPrefixes;
     }
 
-    public QName getDiagramIdQName() {
-        return this.diagramId;
+    private QName getDiagramIdQName() {
+        return this.diagramIdQName;
     }
 
-    public QName getShapeIdQName() {
-        return this.shapeId;
+    private QName getShapeIdQName() {
+        return this.shapeIdQName;
+    }
+
+    public String getDiagramId(TDMNElement element) {
+        javax.xml.namespace.QName diagramIdQName = getDiagramIdQName();
+        return element.getOtherAttributes().get(diagramIdQName);
+    }
+
+    public String getShapeId(TDRGElement element) {
+        javax.xml.namespace.QName shapeIdQName = getShapeIdQName();
+        return element.getOtherAttributes().get(shapeIdQName);
     }
 
     public SignavioExtension getExtension() {
@@ -115,7 +139,7 @@ public class SignavioDMNModelRepository extends DMNModelRepository {
     }
 
     @Override
-    protected List<DRGElementReference<TInputData>> collectAllInputDatas(DRGElementReference<? extends TDRGElement> parentReference) {
+    protected List<DRGElementReference<TInputData>> collectTransitiveInputDatas(DRGElementReference<? extends TDRGElement> parentReference) {
         TDRGElement parent = parentReference.getElement();
         ImportPath parentImportPath = parentReference.getImportPath();
         List<DRGElementReference<TInputData>> result = new ArrayList<>();
@@ -126,7 +150,7 @@ public class SignavioDMNModelRepository extends DMNModelRepository {
             TDecision topLevelDecision = multiInstanceDecisionLogic.getTopLevelDecision();
             DRGElementReference<? extends TDRGElement> topLevelReference = makeDRGElementReference(topLevelDecision);
 
-            List<DRGElementReference<TInputData>> inputDataList = collectAllInputDatas(topLevelReference);
+            List<DRGElementReference<TInputData>> inputDataList = collectTransitiveInputDatas(topLevelReference);
             inputDataList.removeIf(tInputDataDMNReference -> tInputDataDMNReference.getElement() == multiInstanceDecisionLogic.getIterator());
             result.addAll(inputDataList);
         }
@@ -138,7 +162,7 @@ public class SignavioDMNModelRepository extends DMNModelRepository {
             if (child != null) {
                 String importName = findImportName(parent, reference);
                 DRGElementReference<TDecision> childReference = makeDRGElementReference(new ImportPath(parentImportPath, importName), child);
-                List<DRGElementReference<TInputData>> inputReferences = collectAllInputDatas(childReference);
+                List<DRGElementReference<TInputData>> inputReferences = collectTransitiveInputDatas(childReference);
                 result.addAll(inputReferences);
             } else {
                 throw new DMNRuntimeException(String.format("Cannot find Decision for '%s' in parent '%s'", reference.getHref(), parent.getName()));
@@ -229,8 +253,8 @@ public class SignavioDMNModelRepository extends DMNModelRepository {
         }
         Map<QName, String> otherAttributes = element.getOtherAttributes();
         QName diagramIdQName = getDiagramIdQName();
-        String shapeId = otherAttributes.get(diagramIdQName);
-        return id.equals(shapeId);
+        String diagramId = otherAttributes.get(diagramIdQName);
+        return id.equals(diagramId);
     }
 
     private boolean sameShapeId(TDRGElement element, String id) {

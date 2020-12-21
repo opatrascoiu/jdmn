@@ -15,7 +15,7 @@ package com.gs.dmn.serialization;
 import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.runtime.DMNRuntimeException;
 import com.gs.dmn.runtime.Pair;
-import org.omg.spec.dmn._20180521.model.TDefinitions;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -36,9 +36,7 @@ import java.io.Reader;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class DMNReader extends DMNSerializer {
     public static boolean isDMNFile(File file) {
@@ -46,7 +44,7 @@ public class DMNReader extends DMNSerializer {
     }
 
     private final boolean validateSchema;
-    private DMNDialectTransformer transformer = new DMNDialectTransformer(logger);
+    private final DMNDialectTransformer dmnTransformer = new DMNDialectTransformer(logger);
 
     public DMNReader(BuildLogger logger, boolean validateSchema) {
         super(logger);
@@ -149,7 +147,9 @@ public class DMNReader extends DMNSerializer {
         }
 
         if (value instanceof org.omg.spec.dmn._20151101.model.TDefinitions) {
-            return transformer.transformDefinitions((org.omg.spec.dmn._20151101.model.TDefinitions) value);
+            return this.dmnTransformer.transform11To13Definitions((org.omg.spec.dmn._20151101.model.TDefinitions) value);
+        } else if (value instanceof org.omg.spec.dmn._20180521.model.TDefinitions) {
+            return this.dmnTransformer.transform12To13Definitions((org.omg.spec.dmn._20180521.model.TDefinitions) value);
         } else if (value instanceof TDefinitions) {
             return new Pair<>((TDefinitions) value, new PrefixNamespaceMappings());
         } else {

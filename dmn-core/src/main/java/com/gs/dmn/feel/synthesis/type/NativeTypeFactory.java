@@ -13,9 +13,13 @@
 package com.gs.dmn.feel.synthesis.type;
 
 public interface NativeTypeFactory {
-    String toJavaType(String feelType);
+    String toNativeType(String feelType);
 
-    String toQualifiedJavaType(String feelType);
+    String toQualifiedNativeType(String feelType);
 
     String nullableType(String nativeType);
+
+    String constructorOfGenericType(String typeName, String... typeParameters);
+
+    String javaClass(String type);
 }

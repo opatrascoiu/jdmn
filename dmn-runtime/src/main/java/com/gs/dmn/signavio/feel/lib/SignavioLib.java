@@ -17,14 +17,6 @@ import com.gs.dmn.feel.lib.FEELLib;
 import java.util.List;
 
 public interface SignavioLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends FEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> {
-    default void logError(String message) {
-        LOGGER.error(message);
-    }
-
-    default void logError(String message, Throwable e) {
-        LOGGER.error(message, e);
-    }
-
     //
     // Data acceptance functions
     //
@@ -73,9 +65,9 @@ public interface SignavioLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends FE
     NUMBER integer(NUMBER number);
 
     //    Modulo(divident, divisor):NUMERIC
-    //    Returns the remainder of the divident divided by the divisor.
+    //    Returns the remainder of the dividend divided by the divisor.
     //    Example: Modulo(4, 3) returns 1.
-    NUMBER modulo(NUMBER divident, NUMBER divisor);
+    NUMBER modulo(NUMBER dividend, NUMBER divisor);
 
     //    Percent(number):NUMERIC
     //    Returns the number divided by .
@@ -122,13 +114,13 @@ public interface SignavioLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends FE
     //    Returns the date plus the provided number of days.
     //    Example: DayAdd(2015-12-24T12:15:00.000+01:00, 1) returns
     //    2015-12-25T12:15:00.000+01:00.
-    DATE dayAdd(DATE_TIME dateTime, NUMBER daysToAdd);
+    DATE dayAdd(DATE date, NUMBER daysToAdd);
 
     //    DayDiff(datetime1, datetime2):NUMERIC
     //    Returns the amount of days between two days.
     //    Example: DayDiff(2015-12-24T12:15:00.000+01:00, 2015-12-25T12:15:00.000+01:00)
     //    returns 1.
-    NUMBER dayDiff(DATE_TIME dateTime1, DATE_TIME dateTime2);
+    NUMBER dayDiff(DATE date1, DATE date2);
 
     //    Date(day, month, year):DATE
     //    Returns a date using the standard parameters of a date: day, month, year
@@ -147,13 +139,13 @@ public interface SignavioLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends FE
     //    Returns the hour part of a datetime.
     //    Example: Hour(2015-12-24T12:15:00.000+01:00) returns 12.
     @Override
-    NUMBER hour(TIME dateTime);
+    NUMBER hour(TIME time);
 
     //    HourDiff(datetime1, datetime2):NUMERIC
     //    Return the number of hours between two datetimes.
     //    Example: HourDiff(2015-12-24T12:15:00.000+01:00, 2015-12-24T14:15:00.000+01:00)
     //    returns 2.
-    NUMBER hourDiff(DATE_TIME dateTime1, DATE_TIME dateTime2);
+    NUMBER hourDiff(TIME time1, TIME time2);
 
     //    Minute(time):NUMERIC
     //    Returns the minute part of a datetime.
@@ -165,25 +157,25 @@ public interface SignavioLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends FE
     //    Return the number of minutes between two datetimes.
     //    Example: MinutesDiff(2015-12-24T12:15:00.000+01:00,
     //                         2015-12-24T13:15:00.000+01:00) returns 60.
-    NUMBER minutesDiff(DATE_TIME dateTime1, DATE_TIME dateTime2);
+    NUMBER minutesDiff(TIME time1, TIME time2);
 
     //    Month(datetime):NUMERIC
     //    Returns the month part of a datetime.
     //    Example: Month(2015-12-24T12:15:00.000+01:00) returns 12.
     @Override
-    NUMBER month(DATE dateTime);
+    NUMBER month(DATE date);
 
     //    MonthAdd(datetime, months_to_add):DATE
     //    Returns the datetime plus the number of months.
     //    Example: MonthAdd(2015-10-10T12:15:00.000+01:00, 1) returns
     //    2015-11-10T12:15:00.000+01:00.
-    DATE_TIME monthAdd(DATE_TIME dateTime, NUMBER monthsToAdd);
+    DATE monthAdd(DATE date, NUMBER monthsToAdd);
 
     //    MonthDiff(datetime1, datetime2):NUMERIC
     //    Return the number of month between two datetimes.
     //    Example: MonthDiff(2015-10-10T12:15:00.000+01:00, 2015-11-10T12:15:00.000+01:00)
     //    returns 1.
-    NUMBER monthDiff(DATE_TIME dateTime1, DATE_TIME dateTime2);
+    NUMBER monthDiff(DATE date1, DATE date2);
 
     //    Now():DATE_TIME
     //    Returns current datetime.
@@ -204,19 +196,19 @@ public interface SignavioLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends FE
     //    Returns the year part of a datetime.
     //    Example: Year(2016-02-09T12:15:00.000+01:00) returns 2016.
     @Override
-    NUMBER year(DATE dateTime);
+    NUMBER year(DATE date);
 
     //    YearAdd(datetime, years_to_add):DATE
     //    Returns the datetime plus the number of years.
     //    Example: YearAdd(2016-02-09T12:15:00.000+01:00, 1) returns
     //    2017-02-09T12:15:00.000+01:00.
-    DATE_TIME yearAdd(DATE_TIME dateTime, NUMBER yearsToAdd);
+    DATE yearAdd(DATE date, NUMBER yearsToAdd);
 
     //    YearDiff(datetime1, datetime2):NUMERIC
     //    Returns the number of years between two datetimes.
     //    Example: YearDiff(2016-02-09T12:15:00.000+01:00, 2017-02-09T12:15:00.000+01:00)
     //    returns 1.
-    NUMBER yearDiff(DATE_TIME dateTime1, DATE_TIME dateTime2);
+    NUMBER yearDiff(DATE date1, DATE date2);
 
     //
     // List operations

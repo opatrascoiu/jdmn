@@ -12,8 +12,8 @@
  */
 package com.gs.dmn.runtime;
 
-import com.gs.dmn.feel.lib.type.time.xml.DefaultDateTimeLib;
 import com.gs.dmn.feel.lib.type.time.xml.BaseDefaultDurationType;
+import com.gs.dmn.feel.lib.type.time.xml.DefaultDateTimeLib;
 
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -132,11 +132,13 @@ public class Assert {
     }
 
     private static List<Method> getters(Class<?> cls) {
-        Method[] declaredMethods = cls.getDeclaredMethods();
         List<Method> getters = new ArrayList<>();
-        for (Method m : declaredMethods) {
-            if (m.getName().startsWith("get")) {
-                getters.add(m);
+        if (com.gs.dmn.runtime.DMNType.class.isAssignableFrom(cls)) {
+            Method[] declaredMethods = cls.getDeclaredMethods();
+            for (Method m : declaredMethods) {
+                if (m.getName().startsWith("get")) {
+                    getters.add(m);
+                }
             }
         }
         return getters;
@@ -168,9 +170,5 @@ public class Assert {
             return new BigDecimal(object.toString());
         }
         return object;
-    }
-
-    public static Object roundUp(BigDecimal bigDecimal) {
-        return bigDecimal.setScale(ASSERT_SCALE, java.math.BigDecimal.ROUND_UP).stripTrailingZeros();
     }
 }

@@ -30,10 +30,10 @@ import com.gs.dmn.signavio.rdf2dmn.json.expression.FunctionCall;
 import com.gs.dmn.signavio.rdf2dmn.json.expression.Reference;
 import com.gs.dmn.signavio.rdf2dmn.json.relation.EnumerationProperty;
 import com.gs.dmn.signavio.rdf2dmn.json.relation.Relation;
+import com.gs.dmn.transformation.AbstractDMNToNativeTransformer;
 import com.gs.dmn.transformation.AbstractFileTransformer;
-import com.gs.dmn.transformation.DMNToJavaTransformer;
-import com.gs.dmn.transformation.InputParamUtil;
-import com.gs.dmn.transformation.basic.BasicDMN2JavaTransformer;
+import com.gs.dmn.transformation.InputParameters;
+import com.gs.dmn.transformation.basic.BasicDMNToNativeTransformer;
 import com.gs.dmn.transformation.lazy.NopLazyEvaluationDetector;
 import org.apache.commons.lang3.StringUtils;
 import org.omg.spec.dmn._20151101.model.*;
@@ -64,11 +64,11 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
     public static final String DURATION_TYPE = "duration";
     public static final String ENUMERATION_TYPE = "enumeration";
 
-    public static final List<String> FEEL_DATA_TYPES = Arrays.asList(
+    protected static final List<String> FEEL_DATA_TYPES = Arrays.asList(
             NUMBER_TYPE, BOOLEAN_TYPE, STRING_TYPE, DATE_TYPE, TIME_TYPE, DATETIME_TYPE, DURATION_TYPE, ENUMERATION_TYPE
     );
 
-    public static String RDF_FILE_EXTENSION = ".xml";
+    public static final String RDF_FILE_EXTENSION = ".xml";
 
     public static boolean isRDFFile(File file) {
         return file != null && file.isFile() && file.getName().endsWith(RDF_FILE_EXTENSION);
@@ -82,23 +82,20 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
 
     private static final ObjectFactory OBJECT_FACTORY = new ObjectFactory();
 
-    private final String namespace;
-    private final String prefix;
-
     private RDFModel rdfModel;
     private final RDFReader rdfReader;
-    private final DMNDialectDefinition dialectDefinition = new SignavioDMNDialectDefinition();
-    private final BasicDMN2JavaTransformer dmnTransformer = dialectDefinition.createBasicTransformer(new SignavioDMNModelRepository(), new NopLazyEvaluationDetector(), new LinkedHashMap<>());
+    private final DMNDialectDefinition<?, ?, ?, ?, ?, ?> dialectDefinition;
+    private final BasicDMNToNativeTransformer dmnTransformer;
     private final DMNReader dmnReader;
     private final DMNWriter dmnWriter;
 
-    public RDFToDMNTransformer(Map<String, String> inputParameters, BuildLogger logger) {
+    public RDFToDMNTransformer(InputParameters inputParameters, BuildLogger logger) {
         super(inputParameters, logger);
+        this.dialectDefinition = new SignavioDMNDialectDefinition();
+        this.dmnTransformer = this.dialectDefinition.createBasicTransformer(new SignavioDMNModelRepository(), new NopLazyEvaluationDetector(), inputParameters);
         this.dmnReader = new DMNReader(logger, false);
         this.dmnWriter = new DMNWriter(logger);
         this.rdfReader = new RDFReader(logger);
-        this.namespace = InputParamUtil.getRequiredParam(inputParameters, "namespace");
-        this.prefix = InputParamUtil.getRequiredParam(inputParameters, "prefix");
     }
 
     @Override
@@ -145,7 +142,7 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
             logger.info(String.format("Output file %s ...", outputFile.getCanonicalPath()));
 
             TDefinitions element = transform(diagramName(child), inputStream);
-            dmnWriter.write(element, outputFile, new DMNNamespacePrefixMapper(namespace, prefix, DMN_11));
+            dmnWriter.write(element, outputFile, new DMNNamespacePrefixMapper(this.inputParameters.getNamespace(), this.inputParameters.getPrefix(), DMN_11));
         } catch (Exception e) {
             throw new DMNRuntimeException(String.format("Error during transforming '%s'.", child.getName()), e);
         }
@@ -420,7 +417,7 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
     }
 
     String makeItemDefinitionName(String name) {
-        return dmnTransformer.javaFriendlyVariableName(name);
+        return dmnTransformer.nativeFriendlyVariableName(name);
     }
 
     String makeDecisionName(String name) {
@@ -527,7 +524,7 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
         tLiteralExpression.setText(text(expression));
         String expressionLanguage = expression.getExpressionLanguage();
         if (StringUtils.isBlank(expressionLanguage)) {
-            tLiteralExpression.setExpressionLanguage(DMNToJavaTransformer.FREE_TEXT_LANGUAGE);
+            tLiteralExpression.setExpressionLanguage(AbstractDMNToNativeTransformer.FREE_TEXT_LANGUAGE);
         }
         return tLiteralExpression;
     }
@@ -616,13 +613,13 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
     }
 
     private String text(DecisionExpression text) {
-        Visitor visitor = new ToDMNVisitor(rdfModel);
+        Visitor visitor = new ToDMNVisitor(rdfModel, inputParameters);
         Context params = new Context();
         return text.accept(visitor, params);
     }
 
     private String text(Expression text) {
-        Visitor visitor = new ToDMNVisitor(rdfModel);
+        Visitor visitor = new ToDMNVisitor(rdfModel, inputParameters);
         Context params = new Context();
         return text.accept(visitor, params);
     }
@@ -642,19 +639,19 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
         String resourceId = reference.getShapeId();
         try {
             Element resource = rdfModel.findDescriptionById(resourceId);
-            StringBuilder text = new StringBuilder(dmnTransformer.javaFriendlyVariableName(rdfModel.getName(resource)));
+            StringBuilder text = new StringBuilder(dmnTransformer.nativeFriendlyVariableName(rdfModel.getName(resource)));
             List<String> pathElements = reference.getPathElements();
             if (pathElements != null) {
                 for (String pathElement : pathElements) {
                     String name = rdfModel.pathName(resource, pathElement);
                     if (!StringUtils.isBlank(name)) {
-                        text.append(".").append(dmnTransformer.javaFriendlyVariableName(name));
+                        text.append(".").append(dmnTransformer.nativeFriendlyVariableName(name));
                     }
                 }
             }
             return text.toString();
         } catch (Exception e) {
-            throw new DMNRuntimeException(String.format("Cannot build path for reference '%s'", resourceId));
+            throw new DMNRuntimeException(String.format("Cannot build path for reference '%s'", resourceId), e);
         }
     }
 
@@ -695,7 +692,7 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
                     tOutputClause.setOutputValues(unaryTests);
                 }
             } else {
-                tOutputClause.setTypeRef(makeQName(namespace, type));
+                tOutputClause.setTypeRef(makeQName(this.inputParameters.getNamespace(), type));
             }
             tOutputClauses.add(tOutputClause);
         } else {
@@ -719,7 +716,7 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
                             tOutputClause.setOutputValues(unaryTests);
                         }
                     } else {
-                        tOutputClause.setTypeRef(makeQName(namespace, type));
+                        tOutputClause.setTypeRef(makeQName(this.inputParameters.getNamespace(), type));
                     }
                     tOutputClauses.add(tOutputClause);
                 } catch (Exception e) {
@@ -750,7 +747,7 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
 
             List<TUnaryTests> inputEntry = tDecisionRule.getInputEntry();
             List<Expression> conditions = rule.getConditions();
-            Visitor visitor = new ToDMNVisitor(rdfModel);
+            Visitor visitor = new ToDMNVisitor(rdfModel, inputParameters);
             for (int conditionIndex = 0; conditionIndex < conditions.size(); conditionIndex++) {
                 Expression condition = conditions.get(conditionIndex);
                 TUnaryTests unaryTests = OBJECT_FACTORY.createTUnaryTests();
@@ -790,7 +787,7 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
         item.setId(makeInputDataVariableId(resource));
         item.setName(inputData.getName());
         item.setLabel(inputData.getName());
-        item.setTypeRef(makeQName(namespace, makeItemDefinitionName(resource)));
+        item.setTypeRef(makeQName(this.inputParameters.getNamespace(), makeItemDefinitionName(resource)));
         return item;
     }
 
@@ -882,11 +879,11 @@ public class RDFToDMNTransformer extends AbstractFileTransformer {
     }
 
     private QName makeQName(Element resource) {
-        return makeQName(namespace, makeItemDefinitionName(resource));
+        return makeQName(this.inputParameters.getNamespace(), makeItemDefinitionName(resource));
     }
 
     private QName makeQName(String namespace, String name) {
-        String cleanName = dmnTransformer.javaFriendlyName(name);
+        String cleanName = dmnTransformer.nativeFriendlyName(name);
         return new QName(namespace, cleanName);
     }
 }

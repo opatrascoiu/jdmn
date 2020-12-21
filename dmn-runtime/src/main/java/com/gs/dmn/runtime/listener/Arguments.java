@@ -14,22 +14,11 @@ package com.gs.dmn.runtime.listener;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Arguments extends LinkedHashMap<String, Object> {
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-        for (Map.Entry<String, Object> entry : this.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-            if (first) {
-                first = false;
-            } else {
-                result.append(", ");
-            }
-            result.append(String.format("%s='%s'", key, value));
-        }
-        return result.toString();
+        return this.entrySet().stream().map(entry -> String.format("%s='%s'", entry.getKey(), entry.getValue())).collect(Collectors.joining(", "));
     }
 }

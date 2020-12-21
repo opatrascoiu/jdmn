@@ -14,10 +14,10 @@ package com.gs.dmn.maven.configuration.components;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gs.dmn.maven.configuration.OptionallyConfigurableMojoComponent;
+
 import java.util.Map;
 
 public class DMNTransformerComponent extends OptionallyConfigurableMojoComponent {
-
     public DMNTransformerComponent() {
         super();
     }

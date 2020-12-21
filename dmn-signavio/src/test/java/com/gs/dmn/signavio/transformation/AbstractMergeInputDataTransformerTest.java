@@ -24,12 +24,14 @@ import com.gs.dmn.signavio.testlab.TestLab;
 import com.gs.dmn.signavio.testlab.TestLabReader;
 import com.gs.dmn.transformation.AbstractFileTransformerTest;
 import org.junit.Test;
-import org.omg.spec.dmn._20180521.model.TDefinitions;
-import org.omg.spec.dmn._20180521.model.TInputData;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
+import org.omg.spec.dmn._20191111.model.TInputData;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.fail;
 
@@ -42,15 +44,17 @@ public abstract class AbstractMergeInputDataTransformerTest extends AbstractFile
     protected final DMNWriter dmnWriter = new DMNWriter(LOGGER);
     protected final TestLabReader testReader = new TestLabReader();
 
-
     @Test
     public void testTransform() throws Exception {
-        String path = "dmn/input/";
+        String path = "dmn/input/1.1/";
 
         // Transform DMN
         File dmnFile = new File(resource(path + getDMNFileName()));
         Pair<TDefinitions, PrefixNamespaceMappings> pair = dmnReader.read(dmnFile);
         DMNModelRepository repository = new SignavioDMNModelRepository(pair);
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put("forceMerge", "false");
+        transformer.configure(config);
         DMNModelRepository actualRepository = transformer.transform(repository);
 
         // Transform TestLab

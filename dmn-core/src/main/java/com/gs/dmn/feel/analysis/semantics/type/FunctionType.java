@@ -24,7 +24,7 @@ public abstract class FunctionType extends Type {
     protected final List<Type> parameterTypes = new ArrayList<>();
     protected Type returnType;
 
-    public FunctionType(List<FormalParameter> parameters, Type returnType) {
+    protected FunctionType(List<FormalParameter> parameters, Type returnType) {
         this.returnType = returnType;
         if (parameters != null) {
             this.parameters.addAll(parameters);
@@ -45,7 +45,9 @@ public abstract class FunctionType extends Type {
     }
 
     public void setReturnType(Type returnType) {
-        this.returnType = returnType;
+        if (returnType != null) {
+            this.returnType = returnType;
+        }
     }
 
     public abstract boolean match(ParameterTypes parameterTypes);
@@ -60,6 +62,6 @@ public abstract class FunctionType extends Type {
     }
 
     public boolean isStaticTyped() {
-        return parameters.stream().allMatch(p -> p.getType() != null && p.getType() != AnyType.ANY);
+        return parameters.stream().allMatch(p -> p.getType() != null);
     }
 }

@@ -1,4 +1,16 @@
 <#--
+    Copyright 2016 Goldman Sachs.
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+
+    You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations under the License.
+-->
+<#--
     Apply method body
 -->
 <#macro applyMethodBody drgElement>
@@ -54,8 +66,9 @@
 -->
 <#macro addSubDecisionFields drgElement>
     <#list modelRepository.directSubDecisions(drgElement)>
+
         <#items as subDecision>
-    private final ${transformer.qualifiedName(subDecision)} ${transformer.drgElementVariableName(subDecision)};
+    private final ${transformer.qualifiedName(subDecision)} ${transformer.drgElementReferenceVariableName(subDecision)};
         </#items>
     </#list>
 </#macro>
@@ -63,7 +76,7 @@
 <#macro setSubDecisionFields drgElement>
     <#list modelRepository.directSubDecisions(drgElement)>
         <#items as subDecision>
-        this.${transformer.drgElementVariableName(subDecision)} = ${transformer.drgElementVariableName(subDecision)};
+        this.${transformer.drgElementReferenceVariableName(subDecision)} = ${transformer.drgElementReferenceVariableName(subDecision)};
         </#items>
     </#list>
 </#macro>
@@ -141,7 +154,7 @@
             // Compute output
             output_.setMatched(true);
             <#list expression.output as output>
-            output_.${transformer.setter(drgElement, output)}(${transformer.outputEntryToJava(drgElement, rule.outputEntry[output_index], output_index)});
+            output_.${transformer.setter(drgElement, output)}(${transformer.outputEntryToNative(drgElement, rule.outputEntry[output_index], output_index)});
                 <#if modelRepository.isOutputOrderHit(expression.hitPolicy) && transformer.priority(drgElement, rule.outputEntry[output_index], output_index)?exists>
             output_.${transformer.prioritySetter(drgElement, output)}(${transformer.priority(drgElement, rule.outputEntry[output_index], output_index)});
                 </#if>
@@ -167,18 +180,18 @@
         <#items as rule>
         <#if modelRepository.isFirstSingleHit(expression.hitPolicy) && modelRepository.atLeastTwoRules(expression)>
         <#if rule?is_first>
-        ${transformer.abstractRuleOutputClassName()} tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentsExtra(transformer.ruleArgumentList(drgElement))});
+        ${transformer.abstractRuleOutputClassName()} tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentListExtra(transformer.ruleArgumentList(drgElement))});
         ruleOutputList_.add(tempRuleOutput_);
         boolean matched_ = tempRuleOutput_.isMatched();
         <#else >
         if (!matched_) {
-            tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentsExtra(transformer.ruleArgumentList(drgElement))});
+            tempRuleOutput_ = rule${rule_index}(${transformer.drgElementArgumentListExtra(transformer.ruleArgumentList(drgElement))});
             ruleOutputList_.add(tempRuleOutput_);
             matched_ = tempRuleOutput_.isMatched();
         }
         </#if>
         <#else >
-        ruleOutputList_.add(rule${rule_index}(${transformer.drgElementArgumentsExtra(transformer.ruleArgumentList(drgElement))}));
+        ruleOutputList_.add(rule${rule_index}(${transformer.drgElementArgumentListExtra(transformer.ruleArgumentList(drgElement))}));
         </#if>
         </#items>
     </#list>
@@ -187,7 +200,7 @@
 <#macro addConversionMethod drgElement>
     <#if modelRepository.isCompoundDecisionTable(drgElement)>
     public ${transformer.drgElementOutputClassName(drgElement)} toDecisionOutput(${transformer.ruleOutputClassName(drgElement)} ruleOutput_) {
-        <#assign simpleClassName = transformer.itemDefinitionJavaClassName(transformer.drgElementOutputClassName(drgElement))>
+        <#assign simpleClassName = transformer.itemDefinitionNativeClassName(transformer.drgElementOutputClassName(drgElement))>
         ${simpleClassName} result_ = ${transformer.defaultConstructor(simpleClassName)};
         <#assign expression = modelRepository.expression(drgElement)>
         <#list expression.output as output>
@@ -227,7 +240,7 @@
 
 <#macro addEvaluateExpressionMethod drgElement>
     protected ${transformer.drgElementOutputType(drgElement)} evaluate(${transformer.drgElementEvaluateSignature(drgElement)}) {
-    <#assign stm = transformer.expressionToJava(drgElement)>
+    <#assign stm = transformer.expressionToNative(drgElement)>
     <#if transformer.isCompoundStatement(stm)>
         <#list stm.statements as child>
         ${child.expression}
@@ -250,9 +263,9 @@
             ${extraIndent}// Apply child decisions
         <#items as subDecision>
             <#if transformer.isLazyEvaluated(subDecision)>
-            ${extraIndent}${transformer.lazyEvalClassName()}<${transformer.drgElementOutputType(subDecision)}> ${transformer.drgElementVariableName(subDecision)} = new ${transformer.lazyEvalClassName()}<>(() -> this.${transformer.drgElementVariableName(subDecision)}.apply(${transformer.drgElementArgumentsExtraCache(transformer.drgElementArgumentsExtra(transformer.drgElementArgumentList(subDecision)))}));
+            ${extraIndent}${transformer.lazyEvalClassName()}<${transformer.drgElementOutputType(subDecision)}> ${transformer.drgElementReferenceVariableName(subDecision)} = new ${transformer.lazyEvalClassName()}<>(() -> this.${transformer.drgElementReferenceVariableName(subDecision)}.apply(${transformer.drgElementArgumentListExtraCache(subDecision)}));
             <#else>
-            ${extraIndent}${transformer.drgElementOutputType(subDecision)} ${transformer.drgElementVariableName(subDecision)} = this.${transformer.drgElementVariableName(subDecision)}.apply(${transformer.drgElementArgumentsExtraCache(transformer.drgElementArgumentsExtra(transformer.drgElementArgumentList(subDecision)))});
+            ${extraIndent}${transformer.drgElementOutputType(subDecision)} ${transformer.drgElementReferenceVariableName(subDecision)} = this.${transformer.drgElementReferenceVariableName(subDecision)}.apply(${transformer.drgElementArgumentListExtraCache(subDecision)});
             </#if>
         </#items>
 
@@ -264,14 +277,15 @@
 -->
 <#macro startDRGElement drgElement>
             // ${transformer.startElementCommentText(drgElement)}
-            long ${transformer.drgElementVariableName(drgElement)}StartTime_ = System.currentTimeMillis();
-            ${transformer.argumentsClassName()} ${transformer.drgElementVariableName(drgElement)}Arguments_ = new ${transformer.argumentsClassName()}();
+            long ${transformer.namedElementVariableName(drgElement)}StartTime_ = System.currentTimeMillis();
+            ${transformer.argumentsClassName()} ${transformer.argumentsVariableName(drgElement)} = ${transformer.defaultConstructor(transformer.argumentsClassName())};
+            <#assign elementNames = transformer.drgElementArgumentDisplayNameList(drgElement)/>
             <#list transformer.drgElementArgumentNameList(drgElement)>
             <#items as arg>
-            ${transformer.drgElementVariableName(drgElement)}Arguments_.put("${arg}", ${arg});
+            ${transformer.argumentsVariableName(drgElement)}.put("${transformer.escapeInString(elementNames[arg?index])}", ${arg});
             </#items>
             </#list>
-            ${transformer.eventListenerVariableName()}.startDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.drgElementVariableName(drgElement)}Arguments_);
+            ${transformer.eventListenerVariableName()}.startDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.argumentsVariableName(drgElement)});
 </#macro>
 
 <#macro endDRGElement drgElement output>
@@ -280,7 +294,7 @@
 
 <#macro endDRGElementIndent extraIndent drgElement output>
             ${extraIndent}// ${transformer.endElementCommentText(drgElement)}
-            ${extraIndent}${transformer.eventListenerVariableName()}.endDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.drgElementVariableName(drgElement)}Arguments_, ${output}, (System.currentTimeMillis() - ${transformer.drgElementVariableName(drgElement)}StartTime_));
+            ${extraIndent}${transformer.eventListenerVariableName()}.endDRGElement(<@drgElementAnnotation drgElement/>, ${transformer.argumentsVariableName(drgElement)}, ${output}, (System.currentTimeMillis() - ${transformer.namedElementVariableName(drgElement)}StartTime_));
 </#macro>
 
 <#macro endDRGElementAndReturn drgElement output>

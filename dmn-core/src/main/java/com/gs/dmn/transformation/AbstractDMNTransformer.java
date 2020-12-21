@@ -22,34 +22,30 @@ import com.gs.dmn.serialization.TypeDeserializationConfigurer;
 import com.gs.dmn.transformation.lazy.LazyEvaluationDetector;
 import com.gs.dmn.transformation.template.TemplateProvider;
 import com.gs.dmn.validation.DMNValidator;
-import org.omg.spec.dmn._20180521.model.TDefinitions;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
-public abstract class AbstractDMNTransformer extends AbstractTemplateBasedTransformer {
-    protected final DMNDialectDefinition dialectDefinition;
+public abstract class AbstractDMNTransformer<NUMBER, DATE, TIME, DATE_TIME, DURATION, TEST> extends AbstractTemplateBasedTransformer {
+    protected final DMNDialectDefinition<NUMBER, DATE, TIME, DATE_TIME, DURATION, TEST> dialectDefinition;
     protected final DMNReader dmnReader;
     protected final DMNValidator dmnValidator;
-    protected final DMNTransformer dmnTransformer;
+    protected final DMNTransformer<TEST> dmnTransformer;
     protected final LazyEvaluationDetector lazyEvaluationDetector;
     protected final TypeDeserializationConfigurer typeDeserializationConfigurer;
 
     protected final String decisionBaseClass;
-    protected final String javaRootPackage;
 
-    public AbstractDMNTransformer(DMNDialectDefinition dialectDefinition, DMNValidator dmnValidator, DMNTransformer dmnTransformer, TemplateProvider templateProvider, LazyEvaluationDetector lazyEvaluationDetector, TypeDeserializationConfigurer typeDeserializationConfigurer, Map<String, String> inputParameters, BuildLogger logger) {
+    protected AbstractDMNTransformer(DMNDialectDefinition<NUMBER, DATE, TIME, DATE_TIME, DURATION, TEST> dialectDefinition, DMNValidator dmnValidator, DMNTransformer<TEST> dmnTransformer, TemplateProvider templateProvider, LazyEvaluationDetector lazyEvaluationDetector, TypeDeserializationConfigurer typeDeserializationConfigurer, InputParameters inputParameters, BuildLogger logger) {
         super(templateProvider, inputParameters, logger);
         this.dialectDefinition = dialectDefinition;
         this.dmnTransformer = dmnTransformer;
         this.lazyEvaluationDetector = lazyEvaluationDetector;
         this.typeDeserializationConfigurer = typeDeserializationConfigurer;
-        boolean xsdValidation = InputParamUtil.getOptionalBooleanParam(inputParameters, "xsdValidation");
-        this.dmnReader = new DMNReader(logger, xsdValidation);
+        this.dmnReader = new DMNReader(logger, this.inputParameters.isXsdValidation());
         this.dmnValidator = dmnValidator;
 
-        this.javaRootPackage = InputParamUtil.getOptionalParam(inputParameters, "javaRootPackage");
         this.decisionBaseClass = dialectDefinition.getDecisionBaseClass();
     }
 

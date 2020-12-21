@@ -16,10 +16,10 @@ import com.gs.dmn.runtime.Context;
 import com.gs.dmn.runtime.Pair;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class InterpretedRuleOutputTest {
-
     @Test
     public void testEquals() {
         assertTrue(new InterpretedRuleOutput(true, "123").equals(new InterpretedRuleOutput(true, "123")));

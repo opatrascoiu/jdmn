@@ -22,15 +22,12 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class AbstractFileTransformerTest extends AbstractTest {
+public abstract class AbstractFileTransformerTest extends AbstractTest {
     protected static final BuildLogger LOGGER = new Slf4jBuildLogger(LoggerFactory.getLogger(AbstractFileTransformerTest.class));
 
     protected void compareFile(File expectedOutputFile, File actualOutputFile) throws Exception {

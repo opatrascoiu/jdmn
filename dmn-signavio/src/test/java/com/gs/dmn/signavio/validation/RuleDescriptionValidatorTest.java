@@ -12,9 +12,9 @@
  */
 package com.gs.dmn.signavio.validation;
 
-import com.gs.dmn.validation.AbstractValidatorTest;
+import com.gs.dmn.DMNModelRepository;
 import org.junit.Test;
-import org.omg.spec.dmn._20180521.model.TDecision;
+import org.omg.spec.dmn._20191111.model.TDecision;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,19 +22,45 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class RuleDescriptionValidatorTest extends AbstractValidatorTest {
-    private RuleDescriptionValidator validator = new RuleDescriptionValidator();
+public class RuleDescriptionValidatorTest extends AbstractSignavioValidatorTest {
+    private final DMNModelRepository repository = new DMNModelRepository();
+    private final RuleDescriptionValidator validator = new RuleDescriptionValidator();
+
+    @Test
+    public void testValidate() {
+        String path = "dmn/complex/";
+        String diagramName = "Linked Decision Test.dmn";
+
+        List<String> expectedErrors = Arrays.asList(
+                "(model='Linked Decision Test', label='Assess applicant age', name='assessApplicantAge', id='id-98f1b72e74edaaae8d7fd9043f7e1bc4'): error: Description of rule 0 in decision 'assessApplicantAge' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Assess applicant age', name='assessApplicantAge', id='id-98f1b72e74edaaae8d7fd9043f7e1bc4'): error: Description of rule 1 in decision 'assessApplicantAge' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Assess applicant age', name='assessApplicantAge', id='id-98f1b72e74edaaae8d7fd9043f7e1bc4'): error: Description of rule 2 in decision 'assessApplicantAge' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Make credit decision', name='makeCreditDecision', id='id-5b83918d6fc820d73123e7ca0e6d3ca6'): error: Description of rule 0 in decision 'makeCreditDecision' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Make credit decision', name='makeCreditDecision', id='id-5b83918d6fc820d73123e7ca0e6d3ca6'): error: Description of rule 1 in decision 'makeCreditDecision' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Make credit decision', name='makeCreditDecision', id='id-5b83918d6fc820d73123e7ca0e6d3ca6'): error: Description of rule 2 in decision 'makeCreditDecision' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Process prior issues', name='processPriorIssues', id='id-bdfc5bfa4ce80fd221463ee66b277220'): error: Description of rule 0 in decision 'processPriorIssues' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Process prior issues', name='processPriorIssues', id='id-bdfc5bfa4ce80fd221463ee66b277220'): error: Description of rule 1 in decision 'processPriorIssues' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Process prior issues', name='processPriorIssues', id='id-bdfc5bfa4ce80fd221463ee66b277220'): error: Description of rule 2 in decision 'processPriorIssues' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Process prior issues', name='processPriorIssues', id='id-bdfc5bfa4ce80fd221463ee66b277220'): error: Description of rule 3 in decision 'processPriorIssues' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Process prior issues', name='processPriorIssues', id='id-bdfc5bfa4ce80fd221463ee66b277220'): error: Description of rule 4 in decision 'processPriorIssues' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Root', name='root', id='id-dd34e15633241b301d7c512a35c9493a'): error: Description of rule 0 in decision 'root' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Root', name='root', id='id-dd34e15633241b301d7c512a35c9493a'): error: Description of rule 1 in decision 'root' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Root', name='root', id='id-dd34e15633241b301d7c512a35c9493a'): error: Description of rule 2 in decision 'root' contains illegal sequence 'string(-)'",
+                "(model='Linked Decision Test', label='Root', name='root', id='id-dd34e15633241b301d7c512a35c9493a'): error: Description of rule 3 in decision 'root' contains illegal sequence 'string(-)'"
+        );
+        validate(validator, signavioResource(path + diagramName), expectedErrors);
+    }
 
     @Test
     public void testValidateIncorrectList() {
         String description = "[ , string(\"abc\" ,  , string(\"abc\") , ]";
         List<String> actualErrors = new ArrayList<>();
-        validator.validate(description, 0, makeDecision(), actualErrors);
+        validator.validate(repository, null, makeDecision(), 0, description, actualErrors);
 
         List<String> expectedErrors = Arrays.asList(
-                "Description of rule 0 in decision 'Test' contains illegal sequence '[ ,'",
-                "Description of rule 0 in decision 'Test' contains illegal sequence ',  ,'",
-                "Description of rule 0 in decision 'Test' contains illegal sequence ', ]'"
+                "(name='Test'): error: Description of rule 0 in decision 'Test' contains illegal sequence '[ ,'",
+                "(name='Test'): error: Description of rule 0 in decision 'Test' contains illegal sequence ',  ,'",
+                "(name='Test'): error: Description of rule 0 in decision 'Test' contains illegal sequence ', ]'"
         );
         assertEquals(expectedErrors, actualErrors);
     }
@@ -43,10 +69,10 @@ public class RuleDescriptionValidatorTest extends AbstractValidatorTest {
     public void testValidateIncorrectStrings() {
         String description = "[ string(-) ]";
         List<String> actualErrors = new ArrayList<>();
-        validator.validate(description, 0, makeDecision(), actualErrors);
+        validator.validate(repository, null, makeDecision(), 0, description, actualErrors);
 
         List<String> expectedErrors = Arrays.asList(
-                "Description of rule 0 in decision 'Test' contains illegal sequence 'string(-)'"
+                "(name='Test'): error: Description of rule 0 in decision 'Test' contains illegal sequence 'string(-)'"
         );
         assertEquals(expectedErrors, actualErrors);
     }
@@ -55,10 +81,10 @@ public class RuleDescriptionValidatorTest extends AbstractValidatorTest {
     public void testValidateIncorrectCharacters() {
         String description = "[ string(\"\") , string(\"abc \u00A0 123\") , string(\"\") ]";
         List<String> actualErrors = new ArrayList<>();
-        validator.validate(description, 0, makeDecision(), actualErrors);
+        validator.validate(repository, null, makeDecision(), 0, description, actualErrors);
 
         List<String> expectedErrors = Arrays.asList(
-                "Description of rule 0 in decision 'Test' contains illegal sequence 'NO-BREAK SPACE'"
+                "(name='Test'): error: Description of rule 0 in decision 'Test' contains illegal sequence 'NO-BREAK SPACE'"
         );
         assertEquals(expectedErrors, actualErrors);
     }

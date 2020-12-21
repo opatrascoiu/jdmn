@@ -17,9 +17,10 @@ import com.gs.dmn.serialization.DMNReader;
 import com.gs.dmn.serialization.PrefixNamespaceMappings;
 import org.junit.Before;
 import org.junit.Test;
-import org.omg.spec.dmn._20180521.model.*;
+import org.omg.spec.dmn._20191111.model.*;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +35,7 @@ public class DMNModelRepositoryTest extends AbstractTest {
 
     @Before
     public void setUp() {
-        String pathName = "dmn/input/0004-lending.dmn";
+        String pathName = "tck/1.1/cl3/0004-lending/0004-lending.dmn";
         this.dmnModelRepository = readDMN(pathName);
     }
 
@@ -81,7 +82,7 @@ public class DMNModelRepositoryTest extends AbstractTest {
     public void testAllInputDatas() {
         TDefinitions definitions = this.dmnModelRepository.getRootDefinitions();
         TDRGElement root = this.dmnModelRepository.findDRGElementByName(definitions, "Pre-bureauAffordability");
-        List<DRGElementReference<TInputData>> references = this.dmnModelRepository.allInputDatas(makeRootReference(root), new DRGElementFilter(true));
+        List<DRGElementReference<TInputData>> references = this.dmnModelRepository.inputDataClosure(makeRootReference(root), new DRGElementFilter(true));
         this.dmnModelRepository.sortNamedElementReferences(references);
 
         List<String> actual = references.stream().map(DRGElementReference::toString).collect(Collectors.toList());
@@ -121,10 +122,10 @@ public class DMNModelRepositoryTest extends AbstractTest {
 
     @Test
     public void testCollectAllInputDatas() {
-        this.dmnModelRepository = readDMN("composite/input/0003-name-conflicts");
+        this.dmnModelRepository = readDMN("composite/1.2/0003-name-conflicts/translator/");
 
         TDRGElement root = this.dmnModelRepository.findDRGElementByName("http://www.provider.com/definitions/model-c", "modelCDecisionBasedOnBs");
-        List<DRGElementReference<TInputData>> references = this.dmnModelRepository.collectAllInputDatas(makeRootReference(root));
+        List<DRGElementReference<TInputData>> references = this.dmnModelRepository.collectTransitiveInputDatas(makeRootReference(root));
         this.dmnModelRepository.sortNamedElementReferences(references);
 
         List<String> actual = references.stream().map(DRGElementReference::toString).collect(Collectors.toList());
@@ -137,10 +138,10 @@ public class DMNModelRepositoryTest extends AbstractTest {
 
     @Test
     public void testAllInputDatasWithImports() {
-        this.dmnModelRepository = readDMN("composite/input/0003-name-conflicts");
+        this.dmnModelRepository = readDMN("composite/1.2/0003-name-conflicts/translator/");
 
         TDRGElement root = this.dmnModelRepository.findDRGElementByName("http://www.provider.com/definitions/model-c", "modelCDecisionBasedOnBs");
-        List<DRGElementReference<TInputData>> references = this.dmnModelRepository.collectAllInputDatas(makeRootReference(root));
+        List<DRGElementReference<TInputData>> references = this.dmnModelRepository.collectTransitiveInputDatas(makeRootReference(root));
         this.dmnModelRepository.sortNamedElementReferences(references);
 
         List<String> actual = references.stream().map(DRGElementReference::toString).collect(Collectors.toList());
@@ -149,6 +150,11 @@ public class DMNModelRepositoryTest extends AbstractTest {
                 "DMNReference(import='[modelB2, modelB1, modelA]', namespace='http://www.provider.com/definitions/model-a', model='model-a', element='personName')"
         );
         assertEquals(expected, actual);
+    }
+
+    @Override
+    protected URI resource(String path) {
+        return tckResource(path);
     }
 
     private DMNModelRepository readDMN(String pathName) {

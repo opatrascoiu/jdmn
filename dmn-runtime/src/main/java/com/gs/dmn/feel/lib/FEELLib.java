@@ -21,8 +21,15 @@ import java.util.List;
 public interface FEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends
         NumericType<NUMBER>, StringType, BooleanType, ListType, ContextType,
         DateType<DATE, DURATION>, TimeType<TIME, DURATION>, DateTimeType<DATE_TIME, DURATION>, DurationType<DURATION, NUMBER> {
-
     Logger LOGGER = LoggerFactory.getLogger(FEELLib.class);
+
+    default void logError(String message) {
+        LOGGER.error(message);
+    }
+
+    default void logError(String message, Throwable e) {
+        LOGGER.error(message, e);
+    }
 
     //
     // Constructors
@@ -30,10 +37,10 @@ public interface FEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends
     NUMBER number(String literal);
 
     DATE date(String literal);
-    DATE date(DATE_TIME dateTime);
+    DATE date(DATE dateTime);
 
     TIME time(String literal);
-    TIME time(DATE_TIME dateTime);
+    TIME time(TIME dateTime);
     TIME time(NUMBER hour, NUMBER minute, NUMBER second, DURATION offset);
 
     DATE_TIME dateAndTime(String literal);
@@ -67,7 +74,7 @@ public interface FEELLib<NUMBER, DATE, TIME, DATE_TIME, DURATION> extends
     Object elementAt(List list, NUMBER index);
     Boolean listContains(List list, Object value);
     List flattenFirstLevel(List list);
-    NUMBER count(List<NUMBER> numbers);
+    NUMBER count(List numbers);
     NUMBER min(List<NUMBER> numbers);
     NUMBER max(List<NUMBER> numbers);
     NUMBER sum(List<NUMBER> numbers);

@@ -14,117 +14,17 @@ package com.gs.dmn.fitnesse.fixture;
 
 import com.gs.dmn.dialect.DMNDialectDefinition;
 import com.gs.dmn.dialect.StandardDMNDialectDefinition;
-import com.gs.dmn.feel.analysis.semantics.environment.DefaultDMNEnvironmentFactory;
-import com.gs.dmn.feel.analysis.semantics.environment.Environment;
-import com.gs.dmn.feel.analysis.semantics.type.*;
-import com.gs.dmn.feel.analysis.syntax.ast.FEELContext;
-import com.gs.dmn.feel.analysis.syntax.ast.expression.Expression;
-import com.gs.dmn.feel.lib.StandardFEELLib;
-import com.gs.dmn.runtime.Context;
-import com.gs.dmn.runtime.interpreter.environment.RuntimeEnvironment;
-import com.gs.dmn.runtime.interpreter.environment.RuntimeEnvironmentFactory;
-import com.gs.dmn.transformation.DMNToJavaTransformer;
 import fit.ColumnFixture;
-import org.omg.spec.dmn._20180521.model.TNamedElement;
+import org.omg.dmn.tck.marshaller._20160719.TestCases;
 
 import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
 
 public class AbstractFixture extends ColumnFixture {
-    protected final DMNDialectDefinition dialectDefinition = new StandardDMNDialectDefinition();
-    protected final StandardFEELLib lib;
-    protected Scope scope;
+    protected final DMNDialectDefinition<BigDecimal, XMLGregorianCalendar, XMLGregorianCalendar, XMLGregorianCalendar, Duration, TestCases> dialectDefinition;
 
     public AbstractFixture() {
-        this.lib = (StandardFEELLib) this.dialectDefinition.createFEELLib();
-
-        fitnesse.slim.converters.ConverterRegistry.addConverter(Scope.class, new ScopeConverter());
-        fitnesse.slim.converters.ConverterRegistry.addConverter(Context.class, new ContextConverter());
-        fitnesse.slim.converters.ConverterRegistry.addConverter(Duration.class, new DurationConverter());
-        fitnesse.slim.converters.ConverterRegistry.addConverter(BigDecimal.class, new BigDecimalConverter());
-    }
-
-    public void setScope(Scope scope) {
-        this.scope = scope;
-    }
-
-    protected FEELContext makeContext(TNamedElement element) {
-        Environment environment = makeEnvironment(this.scope);
-        RuntimeEnvironment runtimeEnvironment = makeRuntimeEnvironment(this.scope);
-        return FEELContext.makeContext(element, environment, runtimeEnvironment);
-    }
-
-    protected Environment makeEnvironment(Scope scope) {
-        Environment environment = DefaultDMNEnvironmentFactory.instance().makeEnvironment();
-        if (scope != null) {
-            for(ScopeEntry entry: scope) {
-                String name = entry.getName();
-                Type type = makeType(entry.getType());
-                environment.addDeclaration(DefaultDMNEnvironmentFactory.instance().makeVariableDeclaration(name, type));
-            }
-        }
-        return environment;
-    }
-
-    protected Environment makeInputEntryEnvironment(Environment parent, Expression inputExpression) {
-        Environment environment = DefaultDMNEnvironmentFactory.instance().makeEnvironment(parent, inputExpression);
-        if (inputExpression != null) {
-            environment.addDeclaration(DMNToJavaTransformer.INPUT_ENTRY_PLACE_HOLDER, DefaultDMNEnvironmentFactory.instance().makeVariableDeclaration(DMNToJavaTransformer.INPUT_ENTRY_PLACE_HOLDER, inputExpression.getType()));
-        }
-        return environment;
-    }
-
-    protected RuntimeEnvironment makeRuntimeEnvironment(Scope scope) {
-        RuntimeEnvironment runtimeEnvironment = RuntimeEnvironmentFactory.instance().makeEnvironment();
-        if (scope != null) {
-            for(ScopeEntry entry: scope) {
-                String name = entry.getName();
-                Type type = makeType(entry.getType());
-                runtimeEnvironment.bind(name, makeValue(type, entry.getValue()));
-            }
-        }
-        return runtimeEnvironment;
-    }
-
-    protected Type makeType(String type) {
-        return TypeDeserializer.instance().deserialize(type);
-    }
-
-    private Object makeValue(Type type, Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (type == NumberType.NUMBER) {
-            if (!(value instanceof String)) {
-                value = value.toString();
-            }
-            return this.lib.number((String) value);
-        } else if (type == BooleanType.BOOLEAN) {
-            if (!(value instanceof String)) {
-                value = value.toString();
-            }
-            return Boolean.parseBoolean((String) value);
-        } else if (type == DateType.DATE) {
-            if (!(value instanceof String)) {
-                value = value.toString();
-            }
-            return this.lib.date((String) value);
-        } else if (type == TimeType.TIME) {
-            if (!(value instanceof String)) {
-                value = value.toString();
-            }
-            return this.lib.time((String) value);
-        } else if (type == DateTimeType.DATE_AND_TIME) {
-            if (!(value instanceof String)) {
-                value = value.toString();
-            }
-            return this.lib.dateAndTime((String) value);
-        } else if (type == DurationType.YEARS_AND_MONTHS_DURATION || type == DurationType.DAYS_AND_TIME_DURATION) {
-            if (!(value instanceof String)) {
-                value = value.toString();
-            }
-            return this.lib.duration((String) value);
-        }
-        return value;
+        this.dialectDefinition = new StandardDMNDialectDefinition();
     }
 }

@@ -18,25 +18,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertTrue;
+
 public class UniqueInformationRequirementValidatorTest extends AbstractValidatorTest {
     private final UniqueInformationRequirementValidator validator = new UniqueInformationRequirementValidator();
 
     @Test
     public void testValidateWhenCorrect() {
-        validate(validator, "tck/cl3/input/0020-vacation-days.dmn", new ArrayList<>());
+        validate(validator, tckResource("tck/1.2/cl3/0020-vacation-days/0020-vacation-days.dmn"), new ArrayList<>());
     }
 
     @Test
     public void testValidateDefinitionsWhenNotUniqueNames() {
         List<String> expectedErrors = Arrays.asList(
-                "Duplicated InformationRequirement 'decision-1' in element 'CIP Assessments'",
-                "Duplicated InformationRequirement 'input-1' in element 'CIP Assessments'"
+                "(model='test-dmn', name='CIP Assessments', id='cip-assessments'): error: Duplicated informationRequirement.requiredInput 'input-1'",
+                "(model='test-dmn', name='CIP Assessments', id='cip-assessments'): error: Duplicated informationRequirement.requiredDecision 'decision-1'"
         );
-        validate(validator, "dmn/input/test-dmn-with-duplicated-information-requirements.dmn", expectedErrors);
+        validate(validator, resource("dmn/input/1.1/test-dmn-with-duplicated-information-requirements.dmn"), expectedErrors);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testValidateDefinitionsWhenNull() {
-        validator.validate(null);
+        List<String> actualErrors = validator.validate(null);
+        assertTrue(actualErrors.isEmpty());
     }
 }

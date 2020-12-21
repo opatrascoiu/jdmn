@@ -17,15 +17,18 @@ import com.gs.dmn.runtime.Pair;
 import com.gs.dmn.runtime.interpreter.ImportPath;
 import com.gs.dmn.serialization.DMNVersion;
 import com.gs.dmn.serialization.PrefixNamespaceMappings;
-import com.gs.dmn.transformation.DMNToJavaTransformer;
+import com.gs.dmn.transformation.AbstractDMNToNativeTransformer;
 import com.gs.dmn.transformation.basic.QualifiedName;
 import org.apache.commons.lang3.StringUtils;
-import org.omg.spec.dmn._20180521.model.*;
+import org.omg.spec.dmn._20191111.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
 import java.util.*;
+
+import static org.omg.spec.dmn._20191111.model.TBuiltinAggregator.COUNT;
+import static org.omg.spec.dmn._20191111.model.TBuiltinAggregator.SUM;
 
 public class DMNModelRepository {
     protected static final ObjectFactory OBJECT_FACTORY = new ObjectFactory();
@@ -91,8 +94,7 @@ public class DMNModelRepository {
         }
     }
 
-    @Override
-    public DMNModelRepository clone() {
+    public DMNModelRepository copy() {
         return new DMNModelRepository(this.pairList);
     }
 
@@ -100,6 +102,7 @@ public class DMNModelRepository {
         if (definitions != null) {
             sortDRGElements(definitions.getDrgElement());
             sortNamedElements(definitions.getItemDefinition());
+            sortDMNDI(definitions.getDMNDI());
         }
     }
 
@@ -196,6 +199,43 @@ public class DMNModelRepository {
 
     public TDefinitions getModel(TNamedElement element) {
         return this.elementToDefinitions.get(element);
+    }
+
+    public String makeLocation(TDefinitions definitions, TDMNElement element) {
+        if (definitions == null && element == null) {
+            return null;
+        }
+
+        List<String> locationParts = new ArrayList<>();
+        addModelCoordinates(definitions, element, locationParts);
+        addElementCoordinates(element, locationParts);
+        return locationParts.isEmpty() ? null : String.format("(%s)", String.join(", ", locationParts));
+    }
+
+    protected void addModelCoordinates(TDefinitions definitions, TDMNElement element, List<String> locationParts) {
+        if (definitions != null) {
+            String modelName = definitions.getName();
+            if (!StringUtils.isBlank(modelName)) {
+                locationParts.add(String.format("model='%s'", modelName));
+            }
+        }
+    }
+
+    protected void addElementCoordinates(TDMNElement element, List<String> locationParts) {
+        if (element != null) {
+            String id = element.getId();
+            String label = element.getLabel();
+            String name = element instanceof TNamedElement ? ((TNamedElement) element).getName() : null;
+            if (!StringUtils.isBlank(label)) {
+                locationParts.add(String.format("label='%s'", label));
+            }
+            if (!StringUtils.isBlank(name)) {
+                locationParts.add(String.format("name='%s'", name));
+            }
+            if (!StringUtils.isBlank(id)) {
+                locationParts.add(String.format("id='%s'", id));
+            }
+        }
     }
 
     public String getNamespace(TNamedElement element) {
@@ -306,6 +346,10 @@ public class DMNModelRepository {
         }
     }
 
+    public boolean hasComponents(TItemDefinition itemDefinition) {
+        return !this.isEmpty(itemDefinition.getItemComponent());
+    }
+
     public List<TItemDefinition> sortItemComponent(TItemDefinition itemDefinition) {
         if (itemDefinition == null || itemDefinition.getItemComponent() == null) {
             return new ArrayList<>();
@@ -354,6 +398,42 @@ public class DMNModelRepository {
 
     public void sortNamedElements(List<? extends TNamedElement> elements) {
         elements.sort(Comparator.comparing((TNamedElement o) -> removeSingleQuotes(o.getName())));
+    }
+
+    private void sortDMNDI(DMNDI dmndi) {
+        if (dmndi != null) {
+            sortDMNDiagrams(dmndi);
+            dmndi.getDMNStyle().sort(Comparator.comparing((DMNStyle s) -> styleKey(s)));
+        }
+    }
+
+    private String styleKey(DMNStyle s) {
+        if (s == null) {
+            return "";
+        }
+        return s.getId();
+    }
+
+    private void sortDMNDiagrams(DMNDI dmndi) {
+        List<DMNDiagram> diagrams = dmndi.getDMNDiagram();
+        diagrams.sort(Comparator.comparing((DMNDiagram d) -> diagramKey(d)));
+        for (DMNDiagram d: diagrams) {
+            d.getDMNDiagramElement().sort(Comparator.comparing((JAXBElement<? extends DiagramElement> e) -> diagramElementKey(e)));
+        }
+    }
+
+    private String diagramKey(DMNDiagram d) {
+        if (d == null) {
+            return "";
+        }
+        return String.format("%s-%s", d.getName(), d.getId());
+    }
+
+    private String diagramElementKey(JAXBElement<? extends DiagramElement> e) {
+        if (e == null) {
+            return "";
+        }
+        return String.format("%s-%s", e.getDeclaredType().getSimpleName(), e.getValue().getId());
     }
 
     public void sortNamedElementReferences(List<? extends DRGElementReference<? extends TNamedElement>> references) {
@@ -528,11 +608,11 @@ public class DMNModelRepository {
         return result;
     }
 
-    public List<DRGElementReference<TInputData>> allInputDatas(DRGElementReference<? extends TDRGElement> parentReference, DRGElementFilter drgElementFilter) {
-        return drgElementFilter.filterInputs(collectAllInputDatas(parentReference));
+    public List<DRGElementReference<TInputData>> inputDataClosure(DRGElementReference<? extends TDRGElement> parentReference, DRGElementFilter drgElementFilter) {
+        return drgElementFilter.filterInputs(collectTransitiveInputDatas(parentReference));
     }
 
-    protected List<DRGElementReference<TInputData>> collectAllInputDatas(DRGElementReference<? extends TDRGElement> parentReference) {
+    protected List<DRGElementReference<TInputData>> collectTransitiveInputDatas(DRGElementReference<? extends TDRGElement> parentReference) {
         TDRGElement parent = parentReference.getElement();
         ImportPath parentImportPath = parentReference.getImportPath();
         List<DRGElementReference<TInputData>> result = new ArrayList<>();
@@ -555,7 +635,7 @@ public class DMNModelRepository {
             if (child != null) {
                 // Update reference for descendants
                 String importName = findImportName(parent, reference);
-                List<DRGElementReference<TInputData>> inputReferences = collectAllInputDatas(makeDRGElementReference(new ImportPath(parentImportPath, importName), child));
+                List<DRGElementReference<TInputData>> inputReferences = collectTransitiveInputDatas(makeDRGElementReference(new ImportPath(parentImportPath, importName), child));
                 result.addAll(inputReferences);
             } else {
                 throw new DMNRuntimeException(String.format("Cannot find Decision for '%s' in parent '%s'", reference.getHref(), parent.getName()));
@@ -735,7 +815,7 @@ public class DMNModelRepository {
         return false;
     }
 
-    public TExpression expression(TNamedElement element) {
+    public TExpression expression(TDRGElement element) {
         if (element instanceof TDecision) {
             JAXBElement<? extends TExpression> expression = ((TDecision) element).getExpression();
             if (expression != null) {
@@ -751,8 +831,6 @@ public class DMNModelRepository {
             }
         } else if (element instanceof TDecisionService) {
             return null;
-        } else if (element instanceof TInformationItem) {
-            return null;
         } else {
             throw new UnsupportedOperationException(String.format("'%s' is not supported yet", element.getClass().getSimpleName()));
         }
@@ -763,10 +841,10 @@ public class DMNModelRepository {
         return expression(element) instanceof TLiteralExpression;
     }
 
-    public boolean isFreeTextLiteralExpression(TNamedElement element) {
+    public boolean isFreeTextLiteralExpression(TDRGElement element) {
         TExpression expression = expression(element);
         return expression instanceof TLiteralExpression
-                && DMNToJavaTransformer.FREE_TEXT_LANGUAGE.equals(((TLiteralExpression)expression).getExpressionLanguage());
+                && AbstractDMNToNativeTransformer.FREE_TEXT_LANGUAGE.equals(((TLiteralExpression)expression).getExpressionLanguage());
     }
 
     public boolean isDecisionTableExpression(TDRGElement element) {
@@ -802,45 +880,70 @@ public class DMNModelRepository {
         return list == null || list.isEmpty();
     }
 
-    public QualifiedName typeRef(TDefinitions model, TInformationItem variable) {
-        return QualifiedName.toQualifiedName(model, variable.getTypeRef());
+    public QualifiedName variableTypeRef(TDefinitions model, TInformationItem element) {
+        TInformationItem variable = variable(element);
+        return variable == null ? null : QualifiedName.toQualifiedName(model, variable.getTypeRef());
     }
 
-    public QualifiedName typeRef(TDefinitions model, TDRGElement element) {
-        QualifiedName typeRef = null;
+    public QualifiedName variableTypeRef(TDefinitions model, TDRGElement element) {
+        TInformationItem variable = variable(element);
+        QualifiedName typeRef = variable == null ? null : QualifiedName.toQualifiedName(model, variable.getTypeRef());
+        // Derive from expression
+        if (typeRef == null && element instanceof TDecision) {
+            typeRef = inferExpressionTypeRef(model, element);
+        }
+        return typeRef;
+    }
+
+    public QualifiedName outputTypeRef(TDefinitions model, TDRGElement element) {
         // Derive from variable
         TInformationItem variable = variable(element);
-        if (variable != null) {
-            typeRef = QualifiedName.toQualifiedName(model, variable.getTypeRef());
-        }
+        QualifiedName typeRef = variable == null ? null : QualifiedName.toQualifiedName(model, variable.getTypeRef());
+        // Derive from expression
         if (typeRef == null) {
-            // Derive from expression
-            TExpression expression = expression(element);
-            if (expression != null) {
-                typeRef = QualifiedName.toQualifiedName(model, expression.getTypeRef());
-                if (typeRef == null) {
-                    if (expression instanceof TContext) {
-                        // Derive from return entry
-                        List<TContextEntry> contextEntryList = ((TContext) expression).getContextEntry();
-                        for(TContextEntry ce: contextEntryList) {
-                            if (ce.getVariable() == null) {
-                                JAXBElement<? extends TExpression> returnElement = ce.getExpression();
-                                if (returnElement != null) {
-                                    typeRef = QualifiedName.toQualifiedName(model, returnElement.getValue().getTypeRef());
-                                }
+            typeRef = inferExpressionTypeRef(model, element);
+        }
+        return typeRef;
+    }
+
+    public QualifiedName inferExpressionTypeRef(TDefinitions model, TDRGElement element) {
+        QualifiedName typeRef = null;
+        // Derive from expression
+        TExpression expression = expression(element);
+        if (expression != null) {
+            typeRef = QualifiedName.toQualifiedName(model, expression.getTypeRef());
+            if (typeRef == null) {
+                if (expression instanceof TContext) {
+                    // Derive from return entry
+                    List<TContextEntry> contextEntryList = ((TContext) expression).getContextEntry();
+                    for(TContextEntry ce: contextEntryList) {
+                        if (ce.getVariable() == null) {
+                            JAXBElement<? extends TExpression> returnElement = ce.getExpression();
+                            if (returnElement != null) {
+                                typeRef = QualifiedName.toQualifiedName(model, returnElement.getValue().getTypeRef());
                             }
                         }
-                    } else if (expression instanceof TDecisionTable) {
-                        // Derive from output clause
-                        List<TOutputClause> outputList = ((TDecisionTable) expression).getOutput();
-                        if (outputList.size() == 1) {
-                            typeRef = QualifiedName.toQualifiedName(model, outputList.get(0).getTypeRef());
-                            if (typeRef == null) {
-                                // Derive from rules
-                                List<TDecisionRule> ruleList = ((TDecisionTable) expression).getRule();
-                                List<TLiteralExpression> outputEntry = ruleList.get(0).getOutputEntry();
-                                typeRef = QualifiedName.toQualifiedName(model, outputEntry.get(0).getTypeRef());
-                            }
+                    }
+                } else if (expression instanceof TDecisionTable) {
+                    // Derive from output clauses and rules
+                    TDecisionTable dt = (TDecisionTable) expression;
+                    List<TOutputClause> outputList = dt.getOutput();
+                    if (outputList.size() == 1) {
+                        typeRef = QualifiedName.toQualifiedName(model, outputList.get(0).getTypeRef());
+                        if (typeRef == null) {
+                            // Derive from rules
+                            List<TDecisionRule> ruleList = dt.getRule();
+                            List<TLiteralExpression> outputEntry = ruleList.get(0).getOutputEntry();
+                            typeRef = QualifiedName.toQualifiedName(model, outputEntry.get(0).getTypeRef());
+                        }
+                        // Apply aggregation and hit policy
+                        if (dt.getHitPolicy() == THitPolicy.COLLECT) {
+                            // Type is list
+                            typeRef = null;
+                        }
+                        TBuiltinAggregator aggregation = dt.getAggregation();
+                        if (aggregation == SUM || aggregation == COUNT) {
+                            typeRef = QualifiedName.toQualifiedName(null, "number");
                         }
                     }
                 }
@@ -931,12 +1034,21 @@ public class DMNModelRepository {
             return ((TDecision) element).getVariable();
         } else if (element instanceof TBusinessKnowledgeModel) {
             return ((TBusinessKnowledgeModel) element).getVariable();
+        } else if (element instanceof TInformationItem) {
+            return (TInformationItem) element;
         }
         return null;
     }
 
     public String name(TNamedElement element) {
-        return element.getName();
+        String name = null;
+        if (element != null) {
+            name = element.getName();
+        }
+        if (StringUtils.isBlank(name)) {
+            throw new DMNRuntimeException(String.format("Display name cannot be null for element '%s'", element == null ? null : element.getId()));
+        }
+        return name.trim();
     }
 
     public String label(TDMNElement element) {
@@ -949,10 +1061,10 @@ public class DMNModelRepository {
         if (StringUtils.isBlank(name)) {
             name = element.getName();
         }
-        if (name == null) {
+        if (StringUtils.isBlank(name)) {
             throw new DMNRuntimeException(String.format("Display name cannot be null for element '%s'", element.getId()));
         }
-        return name;
+        return name.trim();
     }
 
     public String findChildImportName(TDRGElement parent, TDRGElement child) {
@@ -1044,5 +1156,22 @@ public class DMNModelRepository {
 
     protected static boolean hasNamespace(String href) {
         return href != null && href.indexOf('#') > 0;
+    }
+
+    public List<TItemDefinition> compositeItemDefinitions(TDefinitions definitions) {
+        List<TItemDefinition> accumulator = new ArrayList<>();
+        collectCompositeItemDefinitions(definitions.getItemDefinition(), accumulator);
+        return accumulator;
+    }
+
+    private void collectCompositeItemDefinitions(List<TItemDefinition> itemDefinitions, List<TItemDefinition> accumulator) {
+        if (itemDefinitions != null) {
+            for (TItemDefinition itemDefinition: itemDefinitions) {
+                if (hasComponents(itemDefinition)) {
+                    accumulator.add(itemDefinition);
+                    collectCompositeItemDefinitions(itemDefinition.getItemComponent(), accumulator);
+                }
+            }
+        }
     }
 }

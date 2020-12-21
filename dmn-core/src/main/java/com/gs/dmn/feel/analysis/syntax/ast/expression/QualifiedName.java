@@ -17,7 +17,6 @@ import com.gs.dmn.feel.analysis.syntax.ast.Visitor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class QualifiedName extends NamedExpression {
     private List<String> names = new ArrayList<>();
@@ -29,11 +28,11 @@ public class QualifiedName extends NamedExpression {
     }
 
     public List<String> getNames() {
-        return names;
+        return this.names;
     }
 
     public String getQualifiedName() {
-        return names.stream().collect(Collectors.joining("."));
+        return String.join(".", this.names);
     }
 
     @Override
@@ -48,6 +47,6 @@ public class QualifiedName extends NamedExpression {
 
     @Override
     public String toString() {
-        return String.format("QualifiedName(%s, %d)", names.stream().collect(Collectors.joining(".")), names.size());
+        return String.format("QualifiedName(%s, %d)", String.join(".", this.names), this.names.size());
     }
 }

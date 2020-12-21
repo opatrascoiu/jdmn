@@ -12,10 +12,11 @@
  */
 package com.gs.dmn.maven;
 
+import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.signavio.rdf2dmn.RDFToDMNTransformer;
 import com.gs.dmn.transformation.FileTransformer;
+import com.gs.dmn.transformation.InputParameters;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -26,7 +27,7 @@ import java.util.Map;
 
 @SuppressWarnings("CanBeFinal")
 @Mojo(name = "rdf-to-dmn", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
-public class RDFToDMNMojo extends AbstractDMNMojo {
+public class RDFToDMNMojo<NUMBER, DATE, TIME, DATE_TIME, DURATION, TEST> extends AbstractFileTransformerMojo<NUMBER, DATE, TIME, DATE_TIME, DURATION, TEST> {
     @Parameter(required = false)
     public Map<String, String> inputParameters;
 
@@ -37,23 +38,32 @@ public class RDFToDMNMojo extends AbstractDMNMojo {
     public File outputFileDirectory;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        checkMandatoryField(inputFileDirectory, "inputFileDirectory");
-        checkMandatoryField(outputFileDirectory, "outputFileDirectory");
+    public void execute() throws MojoExecutionException {
+        transform(this.inputFileDirectory, this.outputFileDirectory);
+    }
 
-        this.getLog().info(String.format("Transforming '%s' to '%s' ...", this.inputFileDirectory, this.outputFileDirectory));
+    @Override
+    protected void checkMandatoryFields() {
+        checkMandatoryField(this.inputFileDirectory, "inputFileDirectory");
+        checkMandatoryField(this.outputFileDirectory, "outputFileDirectory");
+    }
 
-        MavenBuildLogger logger = new MavenBuildLogger(this.getLog());
+    @Override
+    protected FileTransformer makeTransformer(BuildLogger logger) {
         FileTransformer transformer = new RDFToDMNTransformer(
-                inputParameters,
+                makeInputParameters(),
                 logger
         );
-        transformer.transform(inputFileDirectory.toPath(), outputFileDirectory.toPath());
+        return transformer;
+    }
 
-        try {
-            this.project.addCompileSourceRoot(this.outputFileDirectory.getCanonicalPath());
-        } catch (IOException e) {
-            throw new MojoExecutionException("", e);
-        }
+    @Override
+    protected InputParameters makeInputParameters() {
+        return new InputParameters(this.inputParameters);
+    }
+
+    @Override
+    protected void addSourceRoot(File outputFileDirectory) throws IOException {
+        this.project.addCompileSourceRoot(outputFileDirectory.getCanonicalPath());
     }
 }

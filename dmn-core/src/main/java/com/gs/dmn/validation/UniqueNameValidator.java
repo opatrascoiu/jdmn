@@ -12,16 +12,18 @@
  */
 package com.gs.dmn.validation;
 
-import com.google.common.base.Function;
 import com.gs.dmn.DMNModelRepository;
 import com.gs.dmn.log.BuildLogger;
 import com.gs.dmn.log.Slf4jBuildLogger;
-import org.omg.spec.dmn._20180521.model.*;
+import org.omg.spec.dmn._20191111.model.TDMNElement;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
+import org.omg.spec.dmn._20191111.model.TNamedElement;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class UniqueNameValidator extends SimpleDMNValidator {
     public UniqueNameValidator() {
@@ -33,31 +35,31 @@ public class UniqueNameValidator extends SimpleDMNValidator {
     }
 
     @Override
-    public List<String> validate(DMNModelRepository dmnModelRepository) {
+    public List<String> validate(DMNModelRepository repository) {
         List<String> errors = new ArrayList<>();
-
-        if (dmnModelRepository == null) {
-            throw new IllegalArgumentException("Missing definitions");
+        if (isEmpty(repository)) {
+            logger.warn("DMN repository is empty; validator will not run");
+            return errors;
         }
 
-        for (TDefinitions definitions: dmnModelRepository.getAllDefinitions()) {
+        for (TDefinitions definitions: repository.getAllDefinitions()) {
             logger.debug("Validate unique 'DRGElement.name'");
-            validateUnique(
-                    "DRGElement", "name", false,
-                    new ArrayList<>(dmnModelRepository.findDRGElements(definitions)), TNamedElement::getName, null, errors
-            );
+            validateUnique(repository, definitions,
+                    new ArrayList<>(repository.findDRGElements(definitions)), "DRGElement", "name",
+                    false, TNamedElement::getName, null,
+                    errors);
 
             logger.debug("Validate unique 'ItemDefinition.name'");
-            validateUnique(
-                    "ItemDefinition", "name", false,
-                    new ArrayList<>(dmnModelRepository.findItemDefinitions(definitions)), TNamedElement::getName, null, errors
-            );
+            validateUnique(repository, definitions,
+                    new ArrayList<>(repository.findItemDefinitions(definitions)), "ItemDefinition", "name",
+                    false, TNamedElement::getName, null,
+                    errors);
         }
 
         return errors;
     }
 
-    private void validateUnique(String elementType, String property, boolean isOptionalProperty, List<TNamedElement> elements, Function<TNamedElement, String> accessor, String errorMessage, List<String> errors) {
+    private void validateUnique(DMNModelRepository repository, TDefinitions definitions, List<TNamedElement> elements, String elementType, String property, boolean isOptionalProperty, Function<TNamedElement, String> accessor, String errorMessage, List<String> errors) {
         if (errorMessage == null) {
             errorMessage = String.format("The '%s' of a '%s' must be unique.", property, elementType);
         }
@@ -80,7 +82,7 @@ public class UniqueNameValidator extends SimpleDMNValidator {
         for (Map.Entry<String, List<TDMNElement>> entry : map.entrySet()) {
             String key = entry.getKey();
             if(entry.getValue().size() > 1){
-                errors.add(String.format("%s Found %d duplicates for '%s'.", errorMessage, entry.getValue().size(), key));
+                errors.add(makeError(repository, definitions, null, String.format("%s Found %d duplicates for '%s'.", errorMessage, entry.getValue().size(), key)));
             }
         }
     }

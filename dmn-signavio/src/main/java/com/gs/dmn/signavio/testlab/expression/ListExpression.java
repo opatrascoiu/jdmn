@@ -17,11 +17,17 @@ import com.gs.dmn.signavio.testlab.TestLabVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @JsonPropertyOrder({ "type", "value" })
 public class ListExpression extends Expression {
     private List<Expression> value;
+
+    public ListExpression() {
+    }
+
+    public ListExpression(List<Expression> value) {
+        this.value = value;
+    }
 
     public List<Expression> getElements() {
         return value;
@@ -40,9 +46,24 @@ public class ListExpression extends Expression {
                     elementsList.add("null");
                 }
             }
-            String elements = elementsList.stream().collect(Collectors.joining(", "));
+            String elements = String.join(", ", elementsList);
             return String.format("[%s]", elements);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ListExpression that = (ListExpression) o;
+
+        return value != null ? value.equals(that.value) : that.value == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return value != null ? value.hashCode() : 0;
     }
 
     @Override

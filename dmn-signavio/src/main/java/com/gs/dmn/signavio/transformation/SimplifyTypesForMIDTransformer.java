@@ -23,15 +23,16 @@ import com.gs.dmn.signavio.SignavioDMNModelRepository;
 import com.gs.dmn.signavio.dialect.SignavioDMNDialectDefinition;
 import com.gs.dmn.signavio.extension.MultiInstanceDecisionLogic;
 import com.gs.dmn.signavio.testlab.TestLab;
+import com.gs.dmn.transformation.InputParameters;
 import com.gs.dmn.transformation.SimpleDMNTransformer;
-import com.gs.dmn.transformation.basic.BasicDMN2JavaTransformer;
+import com.gs.dmn.transformation.basic.BasicDMNToNativeTransformer;
 import com.gs.dmn.transformation.basic.QualifiedName;
 import com.gs.dmn.transformation.lazy.NopLazyEvaluationDetector;
 import org.apache.commons.lang3.StringUtils;
-import org.omg.spec.dmn._20180521.model.TDecision;
-import org.omg.spec.dmn._20180521.model.TDefinitions;
-import org.omg.spec.dmn._20180521.model.TInputData;
-import org.omg.spec.dmn._20180521.model.TItemDefinition;
+import org.omg.spec.dmn._20191111.model.TDecision;
+import org.omg.spec.dmn._20191111.model.TDefinitions;
+import org.omg.spec.dmn._20191111.model.TInputData;
+import org.omg.spec.dmn._20191111.model.TItemDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ import java.util.Map;
 
 public class SimplifyTypesForMIDTransformer extends SimpleDMNTransformer<TestLab> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimplifyTypesForMIDTransformer.class);
-    private static final DMNDialectDefinition SIGNAVIO_DIALECT = new SignavioDMNDialectDefinition();
+    private static final DMNDialectDefinition<?, ?, ?, ?, ?, ?> SIGNAVIO_DIALECT = new SignavioDMNDialectDefinition();
 
     private final BuildLogger logger;
     private Map<String, Pair<TInputData, List<TInputData>>> inputDataClasses;
@@ -56,22 +57,32 @@ public class SimplifyTypesForMIDTransformer extends SimpleDMNTransformer<TestLab
 
     @Override
     public DMNModelRepository transform(DMNModelRepository repository) {
-        this.inputDataClasses = new LinkedHashMap<>();
+        if (isEmpty(repository)) {
+            logger.warn("DMN repository is empty; transformer will not run");
+            return repository;
+        }
 
+        this.inputDataClasses = new LinkedHashMap<>();
         return removeDuplicateInformationRequirements(repository, logger);
     }
 
     @Override
-    public Pair<DMNModelRepository, List<TestLab>> transform(DMNModelRepository repository, List<TestLab> testLabList) {
+    public Pair<DMNModelRepository, List<TestLab>> transform(DMNModelRepository repository, List<TestLab> testCasesList) {
+        if (isEmpty(repository, testCasesList)) {
+            logger.warn("DMN repository or test cases list is empty; transformer will not run");
+            return new Pair<>(repository, testCasesList);
+        }
+
+        // Transform model
         if (inputDataClasses == null) {
             transform(repository);
         }
 
-        return new Pair<>(repository, testLabList);
+        return new Pair<>(repository, testCasesList);
     }
 
     private DMNModelRepository removeDuplicateInformationRequirements(DMNModelRepository repository, BuildLogger logger) {
-        BasicDMN2JavaTransformer basicTransformer = SIGNAVIO_DIALECT.createBasicTransformer(repository, new NopLazyEvaluationDetector(), new LinkedHashMap<>());
+        BasicDMNToNativeTransformer basicTransformer = SIGNAVIO_DIALECT.createBasicTransformer(repository, new NopLazyEvaluationDetector(), makeInputParameters());
         SignavioDMNModelRepository signavioRepository;
         if (repository instanceof SignavioDMNModelRepository) {
             signavioRepository = (SignavioDMNModelRepository) repository;
@@ -86,8 +97,8 @@ public class SimplifyTypesForMIDTransformer extends SimpleDMNTransformer<TestLab
                     MultiInstanceDecisionLogic midLogic = signavioRepository.getExtension().multiInstanceDecisionLogic(decision);
                     TDecision bodyDecision = midLogic.getTopLevelDecision();
                     TDefinitions bodyDecisionModel = repository.getModel(bodyDecision);
-                    QualifiedName midDecisionTypeRef = signavioRepository.typeRef(decisionModel, decision);
-                    QualifiedName bodyDecisionTypeRef = signavioRepository.typeRef(bodyDecisionModel, bodyDecision);
+                    QualifiedName midDecisionTypeRef = signavioRepository.outputTypeRef(decisionModel, decision);
+                    QualifiedName bodyDecisionTypeRef = signavioRepository.outputTypeRef(bodyDecisionModel, bodyDecision);
                     Type midType = basicTransformer.toFEELType(decisionModel, midDecisionTypeRef);
                     Type bodyDecisionType = basicTransformer.toFEELType(bodyDecisionModel, bodyDecisionTypeRef);
                     if (midType instanceof ListType) {
@@ -108,5 +119,9 @@ public class SimplifyTypesForMIDTransformer extends SimpleDMNTransformer<TestLab
         }
 
         return repository;
+    }
+
+    private InputParameters makeInputParameters() {
+        return new InputParameters(new LinkedHashMap<>());
     }
 }
